@@ -1,0 +1,212 @@
+<!-- settings.html - System settings configuration -->
+{% extends "base.html" %}
+
+{% block title %}Settings - System Configuration{% endblock %}
+
+{% block content %}
+<h1>⚙️ System Settings</h1>
+
+<div class="alert alert-info">
+    Configure system parameters for temperature monitoring and vent control
+</div>
+
+<!-- Fan Configuration -->
+<div class="card">
+    <h2>🌬️ Fan Configuration</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px;">
+        <div class="form-group">
+            <label for="fanRuntime">Fan Runtime Duration:</label>
+            <input type="number" id="fanRuntime" min="1" max="240" step="1" value="30">
+            <small>Minutes that fan will run when activated</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="fanCheckInterval">Check Interval:</label>
+            <input type="number" id="fanCheckInterval" min="1" max="60" step="1" value="5">
+            <small>Seconds between temperature checks</small>
+        </div>
+    </div>
+</div>
+
+<!-- Temperature Monitoring -->
+<div class="card">
+    <h2>🌡️ Temperature Monitoring</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px;">
+        <div class="form-group">
+            <label for="tempThreshold">Temperature Threshold:</label>
+            <input type="number" id="tempThreshold" min="15" max="40" step="0.5" value="25">
+            <small>°C - Fan activates above this threshold</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="tempHysteresis">Hysteresis:</label>
+            <input type="number" id="tempHysteresis" min="0.5" max="5" step="0.5" value="1">
+            <small>°C - Temperature drop to deactivate fan</small>
+        </div>
+    </div>
+</div>
+
+<!-- Occupancy Settings -->
+<div class="card">
+    <h2>👥 Occupancy Tracking</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px;">
+        <div class="form-group">
+            <label for="maxOccupancy">Maximum Occupancy:</label>
+            <input type="number" id="maxOccupancy" min="1" max="500" step="1" value="100">
+            <small>Maximum people allowed in building</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="rfidTimeoutMinutes">RFID Session Timeout:</label>
+            <input type="number" id="rfidTimeoutMinutes" min="1" max="1440" step="1" value="480">
+            <small>Minutes before RFID session expires</small>
+        </div>
+    </div>
+    
+    <div class="form-group" style="max-width: 600px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="requireRFIDLogin" checked>
+            <span><strong>Require RFID for Entry</strong></span>
+        </label>
+        <small>Users must scan RFID to enter/exit</small>
+    </div>
+</div>
+
+<!-- Control Settings -->
+<div class="card">
+    <h2>🎛️ Automation & Control</h2>
+    
+    <div style="display: grid; gap: 15px; max-width: 600px;">
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="enableAutoControl" checked>
+                <span><strong>Enable Automatic Vent Control</strong></span>
+            </label>
+            <small>Automatically activate fan based on temperature</small>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="enableOccupancyControl">
+                <span><strong>Occupancy-based Control</strong></span>
+            </label>
+            <small>Adjust fan speed based on number of people</small>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="enableScheduling">
+                <span><strong>Enable Time-based Scheduling</strong></span>
+            </label>
+            <small>Schedule fan operation by time of day</small>
+        </div>
+    </div>
+</div>
+
+<!-- Prediction Settings -->
+<div class="card">
+    <h2>🎯 Prediction Settings</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px;">
+        <div class="form-group">
+            <label for="predictionInterval">Prediction Interval:</label>
+            <input type="number" id="predictionInterval" min="1" max="60" step="1" value="1">
+            <small>Minutes between predictions</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="predictionDelay">Display Delay:</label>
+            <input type="number" id="predictionDelay" min="0" max="60" step="1" value="10">
+            <small>Minutes to delay showing prediction</small>
+        </div>
+    </div>
+</div>
+
+<!-- Data Retention -->
+<div class="card">
+    <h2>💾 Data Management</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px;">
+        <div class="form-group">
+            <label for="dataRetentionDays">Data Retention:</label>
+            <input type="number" id="dataRetentionDays" min="1" max="365" step="1" value="30">
+            <small>Days to keep historical data</small>
+        </div>
+    </div>
+    
+    <button class="btn" onclick="exportData()" style="margin-top: 15px;">📥 Export Data to CSV</button>
+    <button class="btn btn-secondary" onclick="clearHistory()" style="margin-left: 10px;">🗑️ Clear History</button>
+</div>
+
+<!-- Action Buttons -->
+<div class="card" style="background: #f8f9fa; border-left: 4px solid #667eea;">
+    <h3 style="margin-top: 0;">Save Changes</h3>
+    <p>Click the button below to save all settings. Changes will take effect immediately.</p>
+    <button class="btn" onclick="saveSettings()" style="width: 100%; padding: 15px; font-size: 16px;">
+        💾 Save All Settings
+    </button>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSettings();
+    });
+    
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/admin/settings');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                const settings = data.settings;
+                document.getElementById('fanRuntime').value = settings.fan_runtime_minutes || 30;
+                document.getElementById('tempThreshold').value = settings.temp_threshold || 25;
+                document.getElementById('enableAutoControl').checked = settings.vent_status !== false;
+                // Load other settings as needed
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+    
+    async function saveSettings() {
+        const settings = {
+            fan_runtime_minutes: parseInt(document.getElementById('fanRuntime').value),
+            temp_threshold: parseFloat(document.getElementById('tempThreshold').value),
+            vent_status: document.getElementById('enableAutoControl').checked
+        };
+        
+        try {
+            const response = await fetch('/api/admin/settings/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert('✓ Settings saved successfully!');
+            } else {
+                alert('✗ Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    function exportData() {
+        alert('Data export feature coming soon');
+    }
+    
+    function clearHistory() {
+        if (!confirm('Clear all historical data? This cannot be undone!')) return;
+        alert('History clear feature coming soon');
+    }
+</script>
+{% endblock %}

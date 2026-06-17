@@ -1,0 +1,10 @@
+<!-- index.html - Redirect or login -->
+{% if session and session.get('username') %}
+    {% if request.referrer and '/login' not in request.referrer %}
+        <script>window.location = '/dashboard';</script>
+    {% else %}
+        <script>window.location = '/login';</script>
+    {% endif %}
+{% else %}
+    <script>window.location = '/login';</script>
+{% endif %}

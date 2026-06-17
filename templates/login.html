@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Login - TempControl AI{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <div class="card auth-card">
+        <div class="auth-head">
+            <div>
+                <span class="wordmark-logo">tc</span>
+                <h1>TempControl AI</h1>
+                <small>Intelligent temperature prediction system</small>
+            </div>
+        </div>
+        <div class="auth-body">
+            <form method="POST" action="/login" id="passwordForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn" style="width:100%;" id="loginBtn">Login</button>
+            </form>
+
+            <div class="auth-link">
+                Don't have an account? <a href="/signup">Create one</a>
+            </div>
+            <div class="auth-link" style="margin-top:8px; font-size:13px;">
+                <a href="/forgot-password">Forgot your password?</a>
+            </div>
+            <div class="auth-link" style="margin-top:8px; font-size:13px;">
+                <a href="#resend" onclick="toggleResend(event)">Didn't receive verification email?</a>
+            </div>
+
+            <div class="card" id="resendSection" style="display:none; margin-top:16px;">
+                <h2>Resend Verification</h2>
+                <form method="POST" action="/resend-verification">
+                    <div class="form-group">
+                        <label for="resend-username">Username</label>
+                        <input type="text" id="resend-username" name="username" placeholder="Your username" required>
+                    </div>
+                    <button type="submit" class="btn btn-secondary" style="width:100%;">Resend Email</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleResend(e) {
+        e.preventDefault();
+        const section = document.getElementById('resendSection');
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        if (section.style.display === 'block') document.getElementById('resend-username').focus();
+    }
+
+    document.getElementById('passwordForm').addEventListener('submit', function() {
+        const btn = document.getElementById('loginBtn');
+        btn.textContent = 'Connecting...';
+        btn.disabled = true;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,184 @@
+<!-- system_info.html - System Information Page -->
+{% extends "base.html" %}
+
+{% block title %}System Information - Temperature System{% endblock %}
+
+{% block content %}
+<h1>ℹ️ System Information</h1>
+
+<div class="alert alert-info">
+    <strong>System Details:</strong> Real-time monitoring of system status, sensors, and performance metrics
+</div>
+
+<!-- Main Metrics Grid -->
+<div class="grid grid-3">
+    <div class="metric">
+        <div class="metric-label">Current Temperature</div>
+        <div class="metric-value" id="tempValue">--.-- °C</div>
+        <small>Live sensor reading</small>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">Current Humidity</div>
+        <div class="metric-value" id="humValue">--.-- %</div>
+        <small>Live sensor reading</small>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">Current Occupancy</div>
+        <div class="metric-value" id="occupancyValue">0 people</div>
+        <small>In building</small>
+    </div>
+</div>
+
+<!-- System Status Card -->
+<div class="card">
+    <h2>🔍 System Status</h2>
+    
+    <table style="width: 100%; margin-top: 15px;">
+        <tr>
+            <td style="padding: 12px 0;"><strong>Database:</strong></td>
+            <td style="padding: 12px 0; text-align: right;">Firebase Firestore</td>
+        </tr>
+        <tr style="border-top: 1px solid #f0f0f0;">
+            <td style="padding: 12px 0;"><strong>ML Model:</strong></td>
+            <td style="padding: 12px 0; text-align: right;">RandomForest (Optimized)</td>
+        </tr>
+        <tr style="border-top: 1px solid #f0f0f0;">
+            <td style="padding: 12px 0;"><strong>Server Uptime:</strong></td>
+            <td style="padding: 12px 0; text-align: right;" id="serverUptime">--</td>
+        </tr>
+        <tr style="border-top: 1px solid #f0f0f0;">
+            <td style="padding: 12px 0;"><strong>Last Update:</strong></td>
+            <td style="padding: 12px 0; text-align: right;" id="lastUpdate">--:--:--</td>
+        </tr>
+    </table>
+</div>
+
+<!-- Sensor Details -->
+<div class="card">
+    <h2>📊 Sensor Data</h2>
+    
+    <div class="grid grid-3" style="margin-top: 15px;">
+        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #667eea;">
+            <div style="font-size: 12px; color: #999; margin-bottom: 5px;">TEMPERATURE</div>
+            <div style="font-size: 24px; font-weight: 700; color: #667eea;" id="tempDetail">--.--</div>
+            <div style="font-size: 12px; color: #999; margin-top: 5px;">°C</div>
+        </div>
+        
+        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #764ba2;">
+            <div style="font-size: 12px; color: #999; margin-bottom: 5px;">HUMIDITY</div>
+            <div style="font-size: 24px; font-weight: 700; color: #764ba2;" id="humDetail">--.--</div>
+            <div style="font-size: 12px; color: #999; margin-top: 5px;">%</div>
+        </div>
+        
+        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #ff9800;">
+            <div style="font-size: 12px; color: #999; margin-bottom: 5px;">PRESSURE</div>
+            <div style="font-size: 24px; font-weight: 700; color: #ff9800;" id="pressureDetail">---</div>
+            <div style="font-size: 12px; color: #999; margin-top: 5px;">hPa</div>
+        </div>
+    </div>
+</div>
+
+<!-- Occupancy & Vent Status -->
+<div class="grid grid-2">
+    <div class="card">
+        <h2>👥 Occupancy Settings</h2>
+        <table style="width: 100%; margin-top: 15px;">
+            <tr>
+                <td style="padding: 10px 0;"><strong>Current Count:</strong></td>
+                <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #667eea;" id="occupancyCount">0</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Mode:</strong></td>
+                <td style="padding: 10px 0; text-align: right;" id="occupancyMode">Automatic</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Tracking:</strong></td>
+                <td style="padding: 10px 0; text-align: right;">RFID Scanner</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h2>🌬️ Vent Control</h2>
+        <table style="width: 100%; margin-top: 15px;">
+            <tr>
+                <td style="padding: 10px 0;"><strong>Status:</strong></td>
+                <td style="padding: 10px 0; text-align: right;">
+                    <span id="ventStatus" style="color: #f44336; font-weight: 600;">● OFF</span>
+                </td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Threshold:</strong></td>
+                <td style="padding: 10px 0; text-align: right;" id="tempThreshold">25°C</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Runtime:</strong></td>
+                <td style="padding: 10px 0; text-align: right;">30 mins</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="card">
+    <h2>📈 Quick Statistics</h2>
+    
+    <div class="grid grid-3" style="margin-top: 15px;">
+        <div style="padding: 15px; background: #f0f7ff; border-radius: 6px;">
+            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">TOTAL PREDICTIONS</div>
+            <div style="font-size: 28px; font-weight: 700; color: #667eea;" id="totalPredictions">0</div>
+        </div>
+        
+        <div style="padding: 15px; background: #f0fff4; border-radius: 6px;">
+            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">AVG CONFIDENCE</div>
+            <div style="font-size: 28px; font-weight: 700; color: #4caf50;" id="avgConfidence">--%</div>
+        </div>
+        
+        <div style="padding: 15px; background: #fff8f0; border-radius: 6px;">
+            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">RFID SCANS TODAY</div>
+            <div style="font-size: 28px; font-weight: 700; color: #ff9800;" id="rfidScansToday">0</div>
+        </div>
+    </div>
+</div>
+
+<!-- Refresh Button -->
+<div class="card">
+    <button class="btn" onclick="location.reload()">🔄 Refresh This Page</button>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSystemInfo();
+        setInterval(loadSystemInfo, 5000);
+    });
+    
+    async function loadSystemInfo() {
+        try {
+            const response = await fetch('/api/sensor/latest');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.data) {
+                const sensor = data.data;
+                
+                // Update values
+                document.getElementById('tempValue').textContent = (sensor.temperature || 0).toFixed(2) + ' °C';
+                document.getElementById('tempDetail').textContent = (sensor.temperature || 0).toFixed(2);
+                document.getElementById('humValue').textContent = (sensor.humidity || 0).toFixed(2) + ' %';
+                document.getElementById('humDetail').textContent = (sensor.humidity || 0).toFixed(2);
+                document.getElementById('pressureDetail').textContent = (sensor.pressure || 0).toFixed(0);
+                document.getElementById('occupancyValue').textContent = (sensor.occupancy || 0) + ' people';
+                document.getElementById('occupancyCount').textContent = sensor.occupancy || 0;
+                
+                document.getElementById('lastUpdate').textContent = new Date(sensor.timestamp).toLocaleTimeString();
+            }
+        } catch (error) {
+            console.error('Error loading system info:', error);
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Firebase & API Keys
+app/API/*.json
+!app/API/.gitkeep
+
+# Model files (optional - uncomment if storing large models elsewhere)
+# app/models/*.pkl
+# app/models/*.h5
+# app/models/*.joblib
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary Files
+*.tmp
+*.bak
+*.swp
+temp/
+tmp/
+
+# OS-specific
+Thumbs.db
+.DS_Store
+*.exe
+*.dll
+
+# Node (if using any frontend build tools)
+node_modules/
+npm-debug.log
+package-lock.json
+yarn.lock
+
+# Test Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Dataset backups (keep only current)
+dataset_collect/BACKUP/
+dataset_collect/backup2/
+training/backup/
+
+# Build outputs
+dist/
+build/
+*.whl
+
+# Static files collected for production
+app/static/collected/
+
+# Backup directories
+Backup/
+*.backup

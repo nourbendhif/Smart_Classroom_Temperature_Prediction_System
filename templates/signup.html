@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - TempControl AI{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <div class="card auth-card">
+        <div class="auth-head">
+            <div>
+                <span class="wordmark-logo">tc</span>
+                <h1>Create Account</h1>
+                <small>Join the intelligent climate platform</small>
+            </div>
+        </div>
+        <div class="auth-body">
+            <form method="POST" action="/signup" id="signupForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Choose a unique username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="your.email@example.com" required autocomplete="email">
+                </div>
+                <div class="grid grid-2" style="margin-bottom:0;">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="width:100%;">Create Account</button>
+            </form>
+
+            <div class="auth-link">
+                Already have an account? <a href="/login">Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

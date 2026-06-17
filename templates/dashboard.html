@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Temperature Prediction Details{% endblock %}
+
+{% block content %}
+<section class="details-grid home-details-grid" data-section="overview">
+    <article class="metric detail-card home-combo-card">
+        <div class="detail-top">
+            <span class="detail-icon"><svg><use href="#icon-temp"></use></svg></span>
+            <span class="detail-chip">ESP32</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="home.temp">Temperature</div>
+            <div class="metric-value" id="tempValue">--.-- C</div>
+        </div>
+        <div class="sub-metrics">
+            <div class="sub-metric">
+                <span><svg><use href="#icon-droplet"></use></svg></span>
+                <div>
+                    <small data-i18n="home.humidity">Humidity</small>
+                    <strong id="humValue">--.-- %</strong>
+                </div>
+            </div>
+            <div class="sub-metric">
+                <span><svg><use href="#icon-gauge"></use></svg></span>
+                <div>
+                    <small data-i18n="home.pressure">Pressure</small>
+                    <strong id="pressureValue">--- hPa</strong>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <article class="metric detail-card home-combo-card">
+        <div class="detail-top">
+            <span class="detail-icon"><svg><use href="#icon-brain"></use></svg></span>
+            <span class="detail-chip">Model</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="home.predicted">Predicted temperature</div>
+            <div class="metric-value"><span id="predictionValue">--.--</span> C</div>
+        </div>
+        <div class="sub-metrics confidence-submetric">
+            <div class="sub-metric">
+                <span><svg><use href="#icon-gauge"></use></svg></span>
+                <div>
+                    <small data-i18n="home.confidence">Confidence</small>
+                    <strong><span id="confidence">--</span>%</strong>
+                </div>
+            </div>
+            <div class="mini-meter"><span id="confidenceMeter"></span></div>
+        </div>
+    </article>
+
+    <article class="metric detail-card home-combo-card">
+        <div class="detail-top">
+            <span class="detail-icon"><svg><use href="#icon-clock"></use></svg></span>
+            <span class="detail-chip">Status</span>
+        </div>
+        <div class="stacked-status">
+            <div class="status-row">
+                <span><svg><use href="#icon-clock"></use></svg></span>
+                <div>
+                    <small data-i18n="home.lastPrediction">Last prediction</small>
+                    <strong id="lastPredictionTime">--:--</strong>
+                </div>
+            </div>
+            <div class="status-row">
+                <span><svg><use href="#icon-fan"></use></svg></span>
+                <div>
+                    <small data-i18n="home.fan">Fan status</small>
+                    <strong id="fanStatusValue">--</strong>
+                </div>
+            </div>
+            <div class="status-row">
+                <span><svg><use href="#icon-brain"></use></svg></span>
+                <div>
+                    <small data-i18n="home.aiMode">AI mode</small>
+                    <strong id="aiMode">AUTO</strong>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <article class="metric detail-card">
+        <div class="detail-top">
+            <span class="detail-icon"><svg><use href="#icon-users"></use></svg></span>
+            <span class="detail-chip">RFID</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="home.occupancy">Occupancy</div>
+            <div class="metric-value" id="occupancyValue">0</div>
+        </div>
+        <small data-i18n="home.occupancyHint">People detected by RFID</small>
+    </article>
+
+    <article class="metric detail-card">
+        <div class="detail-top">
+            <span class="detail-icon"><svg><use href="#icon-motion"></use></svg></span>
+            <span class="detail-chip">Motion</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="home.movement">Movement</div>
+            <div class="metric-value" id="movementValue">0</div>
+        </div>
+        <small data-i18n="home.movementHint">Motion sensor state</small>
+    </article>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshHomeDetails();
+        setInterval(refreshHomeDetails, 5000);
+    });
+
+    function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    function setConfidenceMeter(value) {
+        const meter = document.getElementById('confidenceMeter');
+        if (meter) meter.style.width = `${Math.max(0, Math.min(100, value))}%`;
+    }
+
+    function formatTime(value) {
+        if (!value) return new Date().toLocaleTimeString();
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? new Date().toLocaleTimeString() : date.toLocaleTimeString();
+    }
+
+    async function refreshHomeDetails() {
+        try {
+            const response = await fetch('/api/sensor/latest');
+            const data = await response.json();
+
+            if (data.status === 'success' && data.data) {
+                const sensor = data.data;
+                const time = formatTime(sensor.timestamp);
+                const confidence = Number(sensor.confidence || 0);
+
+                setText('tempValue', `${Number(sensor.temperature || 0).toFixed(2)} C`);
+                setText('humValue', `${Number(sensor.humidity || 0).toFixed(2)} %`);
+                setText('pressureValue', `${Number(sensor.pressure || 0).toFixed(0)} hPa`);
+                setText('movementValue', sensor.movement || 0);
+                setText('occupancyValue', sensor.occupancy || 0);
+
+                if (sensor.prediction !== undefined && sensor.prediction !== null) {
+                    setText('predictionValue', Number(sensor.prediction).toFixed(2));
+                    setText('confidence', confidence.toFixed(1));
+                    setConfidenceMeter(confidence);
+                    setText('lastPredictionTime', time);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching sensor data:', error);
+        }
+
+        refreshFanStatus();
+    }
+
+    async function refreshFanStatus() {
+        try {
+            const response = await fetch('/api/fan/status');
+            const data = await response.json();
+            const fan = data.data || data;
+            const isOn = Boolean(fan.is_on || fan.fan_on);
+            const mode = fan.mode ? String(fan.mode).toUpperCase() : 'AUTO';
+
+            setText('fanStatusValue', isOn ? 'ON' : 'OFF');
+            setText('aiMode', mode);
+        } catch (error) {
+            setText('fanStatusValue', '--');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,549 @@
+<!-- predictions_history.html - Temperature Predictions History Page -->
+{% extends "base.html" %}
+
+{% block title %}Temperature Predictions History - Temperature System{% endblock %}
+
+{% block content %}
+<h1>📈 Temperature Predictions History</h1>
+
+<div class="alert alert-info">
+    <strong>Predictions Visualization:</strong> Historical temperature predictions with date/time, charts, and detailed statistics
+</div>
+
+<!-- Time Period Filter -->
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+        <label style="font-weight: 600; margin-bottom: 0;">📅 Time Period:</label>
+        <button class="btn" id="btnHour" onclick="filterByPeriod('hour')" 
+                style="padding: 8px 16px; margin-top: 0; background: #667eea;">⏱️Hour</button>
+        <button class="btn" id="btnDay" onclick="filterByPeriod('day')" 
+                style="padding: 8px 16px; margin-top: 0; background: #667eea;">📆Day</button>
+        <button class="btn" id="btnWeek" onclick="filterByPeriod('week')" 
+                style="padding: 8px 16px; margin-top: 0; background: #667eea;">📊Week</button>
+        <button class="btn" id="btnMonth" onclick="filterByPeriod('month')" 
+                style="padding: 8px 16px; margin-top: 0; background: #667eea;">📈Month</button>
+        <button class="btn" id="btnAllTime" onclick="filterByPeriod('all')" 
+                style="padding: 8px 16px; margin-top: 0; background: #667eea; font-weight: 700;">🌍 All Time</button>
+    </div>
+</div>
+
+<!-- Chart Stats -->
+<div class="grid grid-3">
+    <div class="metric">
+        <div class="metric-label">Total Records</div>
+        <div class="metric-value" id="totalRecords">0</div>
+        <small>Data points</small>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">Avg Confidence</div>
+        <div class="metric-value" id="avgConfidence">--%</div>
+        <small>Prediction accuracy</small>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">MAE</div>
+        <div class="metric-value" id="maeMetric">--°C</div>
+        <small>Mean Absolute Error</small>
+    </div>
+</div>
+
+<!-- Recent Predictions Chart (from stats) -->
+<div class="card">
+    <h2>🎯 Recent Predictions (Last 12 hours)</h2>
+    <div style="position: relative; height: 400px; margin-top: 20px;">
+        <canvas id="recentPredictionsChart"></canvas>
+    </div>
+</div>
+
+<!-- Temperature Trend Chart (from stats) -->
+<div class="card">
+    <h2>📈 Temperature Trend (Last Hour)</h2>
+    <div style="position: relative; height: 400px; margin-top: 20px;">
+        <canvas id="tempTrendChart"></canvas>
+    </div>
+</div>
+
+<!-- Main Temperature Trends Chart with Date & Time -->
+<div class="card">
+    <h2>📊 Temperature Trends (with Date & Time)</h2>
+    <div style="position: relative; height: 400px; margin-top: 20px;">
+        <canvas id="predictionsChart"></canvas>
+    </div>
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+        <small style="color: #999;">
+            <strong style="color: #667eea;">━ Blue Line:</strong> Actual Temperature from Sensors |
+            <strong style="color: #f44336;">━ Red Line:</strong> Predicted Temperature from ML Model
+        </small>
+    </div>
+</div>
+
+<!-- Prediction Details Table -->
+<div class="card">
+    <h2>📋 Prediction Details</h2>
+    
+    <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+        <input type="text" id="filterInput" placeholder="Search by date/time..." 
+               style="padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 4px; flex: 1;">
+        <button class="btn" onclick="exportData()" style="padding: 8px 16px; margin-top: 0;">📥 Export</button>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table id="predictionsTable">
+            <thead>
+                <tr>
+                    <th>🕐 Time & Date</th>
+                    <th>🌡️ Actual (°C)</th>
+                    <th>📊 Predicted (°C)</th>
+                    <th>📈 Error (°C)</th>
+                    <th>✅ Confidence (%)</th>
+                    <th>💧 Humidity (%)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <div class="spinner"></div> Loading...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-2">
+    <div class="card">
+        <h2>📊 Current Session Statistics</h2>
+        <table style="width: 100%;">
+            <tr>
+                <td style="padding: 10px 0;"><strong>Mean Absolute Error (MAE):</strong></td>
+                <td style="padding: 10px 0; text-align: right;" id="mae">--.--°C</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Root Mean Squared Error:</strong></td>
+                <td style="padding: 10px 0; text-align: right;" id="rmse">--.--</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Max Error:</strong></td>
+                <td style="padding: 10px 0; text-align: right;" id="maxError">--.--°C</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Min Error:</strong></td>
+                <td style="padding: 10px 0; text-align: right;" id="minError">--.--°C</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h2>🎯 Accuracy Metrics</h2>
+        <table style="width: 100%;">
+            <tr>
+                <td style="padding: 10px 0;"><strong>Predictions >90% Confidence:</strong></td>
+                <td style="padding: 10px 0; text-align: right; color: #4caf50; font-weight: 600;" id="highConfidence">0</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Predictions 70-90% Confidence:</strong></td>
+                <td style="padding: 10px 0; text-align: right; color: #ff9800; font-weight: 600;" id="mediumConfidence">0</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Predictions <70% Confidence:</strong></td>
+                <td style="padding: 10px 0; text-align: right; color: #f44336; font-weight: 600;" id="lowConfidence">0</td>
+            </tr>
+            <tr style="border-top: 1px solid #f0f0f0;">
+                <td style="padding: 10px 0;"><strong>Average Confidence Rate:</strong></td>
+                <td style="padding: 10px 0; text-align: right; color: #667eea; font-weight: 600;" id="rateConfidence">--%</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- Refresh Button -->
+<div class="card">
+    <button class="btn" onclick="location.reload()">🔄 Refresh This Page</button>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js for visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let allPredictions = [];
+    let predictionsChart = null;
+    let recentPredictionsChart = null;
+    let tempTrendChart = null;
+    let currentPeriod = 'all'; // Default to all time
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set all time as default selected
+        updateButtonStates('all');
+        loadPredictionsHistory('all');
+    });
+    
+    function filterByPeriod(period) {
+        console.log('[DEBUG] Filtering by period:', period);
+        currentPeriod = period;
+        updateButtonStates(period);
+        loadPredictionsHistory(period);
+    }
+    
+    function updateButtonStates(period) {
+        // Remove highlight from all buttons
+        document.getElementById('btnHour').style.background = '#667eea';
+        document.getElementById('btnDay').style.background = '#667eea';
+        document.getElementById('btnWeek').style.background = '#667eea';
+        document.getElementById('btnMonth').style.background = '#667eea';
+        document.getElementById('btnAllTime').style.background = '#667eea';
+        
+        // Highlight selected button
+        switch(period) {
+            case 'hour':
+                document.getElementById('btnHour').style.background = '#4caf50';
+                break;
+            case 'day':
+                document.getElementById('btnDay').style.background = '#4caf50';
+                break;
+            case 'week':
+                document.getElementById('btnWeek').style.background = '#4caf50';
+                break;
+            case 'month':
+                document.getElementById('btnMonth').style.background = '#4caf50';
+                break;
+            case 'all':
+                document.getElementById('btnAllTime').style.background = '#4caf50';
+                break;
+        }
+    }
+    
+    async function loadPredictionsHistory(period = 'all') {
+        try {
+            console.log('[DEBUG] Loading predictions history for period:', period);
+            
+            // Calculate hours based on period
+            let hours = 24;
+            let limit = 100;
+            let periodLabel = 'Last 24 hours';
+            
+            switch(period) {
+                case 'hour':
+                    hours = 1;
+                    limit = 60;
+                    periodLabel = 'Last 1 hour';
+                    break;
+                case 'day':
+                    hours = 24;
+                    limit = 100;
+                    periodLabel = 'Last 24 hours';
+                    break;
+                case 'week':
+                    hours = 24 * 7;
+                    limit = 500;
+                    periodLabel = 'Last 7 days';
+                    break;
+                case 'month':
+                    hours = 24 * 30;
+                    limit = 1000;
+                    periodLabel = 'Last 30 days';
+                    break;
+                case 'all':
+                    hours = 24 * 365;
+                    limit = 10000;
+                    periodLabel = 'All time';
+                    break;
+            }
+            
+            // Fetch records from Firebase
+            const response = await fetch(`/api/predictions/history?limit=${limit}&hours=${hours}`);
+            const data = await response.json();
+            
+            console.log('[DEBUG] Response status:', data.status);
+            console.log('[DEBUG] Records fetched:', data.count);
+            
+            if (data.status === 'success') {
+                allPredictions = data.records || [];
+                
+                console.log('[DEBUG] Total predictions:', allPredictions.length);
+                document.getElementById('totalRecords').textContent = allPredictions.length;
+                
+                // Update statistics from API response
+                if (data.statistics) {
+                    document.getElementById('mae').textContent = data.statistics.mae + '°C';
+                    document.getElementById('rmse').textContent = data.statistics.rmse.toFixed(2);
+                    document.getElementById('maxError').textContent = data.statistics.max_error + '°C';
+                    document.getElementById('minError').textContent = data.statistics.min_error + '°C';
+                    document.getElementById('avgConfidence').textContent = data.statistics.avg_confidence.toFixed(1) + '%';
+                    document.getElementById('rateConfidence').textContent = data.statistics.avg_confidence.toFixed(1) + '%';
+                    document.getElementById('maeMetric').textContent = data.statistics.mae + '°C';
+                }
+                
+                // Calculate confidence levels
+                let high = 0, medium = 0, low = 0;
+                if (data.confidences) {
+                    data.confidences.forEach(conf => {
+                        if (conf >= 90) high++;
+                        else if (conf >= 70) medium++;
+                        else low++;
+                    });
+                    document.getElementById('highConfidence').textContent = high;
+                    document.getElementById('mediumConfidence').textContent = medium;
+                    document.getElementById('lowConfidence').textContent = low;
+                }
+                
+                // Display table with new format (date & time)
+                displayTable(allPredictions);
+                
+                // Initialize charts with full date & time data
+                initializeCharts(data);
+            } else {
+                console.error('[ERROR] API returned error:', data.message);
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #f44336;">Error: ' + (data.message || 'Unknown error') + '</td></tr>';
+            }
+        } catch (error) {
+            console.error('[ERROR] Error loading predictions:', error);
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #f44336;">Error loading predictions: ' + error.message + '</td></tr>';
+        }
+    }
+    
+    function displayTable(predictions) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        
+        if (predictions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #999;">No predictions available</td></tr>';
+            return;
+        }
+        
+        // Display most recent first (reverse order)
+        predictions.slice().reverse().slice(0, 50).forEach(pred => {
+            const datetime = pred.datetime || new Date(pred.timestamp).toLocaleString();
+            const actual = (pred.temperature || 0).toFixed(2);
+            const predicted = (pred.prediction || 0).toFixed(2);
+            const error = (pred.error || 0).toFixed(2);
+            const confidence = (pred.confidence || 0).toFixed(1);
+            const humidity = (pred.humidity || 0).toFixed(1);
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${datetime}</strong></td>
+                <td>${actual}</td>
+                <td>${predicted}</td>
+                <td style="color: ${error > 2 ? '#f44336' : '#4caf50'}; font-weight: 600;">${error}</td>
+                <td style="color: ${confidence >= 90 ? '#4caf50' : confidence >= 70 ? '#ff9800' : '#f44336'}; font-weight: 600;">${confidence}%</td>
+                <td>${humidity}</td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Add filter functionality
+        document.getElementById('filterInput').addEventListener('keyup', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#predictionsTable tbody tr');
+            rows.forEach(row => {
+                const datetime = row.cells[0].textContent.toLowerCase();
+                row.style.display = datetime.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+    
+    function initializeCharts(data) {
+        // Main Temperature Trends Chart (with date & time)
+        initializePredictionsChart(data);
+        
+        // Recent Predictions Chart (last 12 hours - last 24 records)
+        initializeRecentPredictionsChart(data);
+        
+        // Temperature Trend Chart (last hour - last 12 records)
+        initializeTempTrendChart(data);
+    }
+    
+    function initializePredictionsChart(data) {
+        const ctx = document.getElementById('predictionsChart');
+        if (!ctx) return;
+        
+        if (predictionsChart) predictionsChart.destroy();
+        
+        predictionsChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: data.labels || [],
+                datasets: [
+                    {
+                        label: 'Actual Temperature (°C)',
+                        data: data.temperatures || [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: 'Predicted Temperature (°C)',
+                        data: data.predictions || [],
+                        borderColor: '#f44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+    
+    function initializeRecentPredictionsChart(data) {
+        const ctx = document.getElementById('recentPredictionsChart');
+        if (!ctx) return;
+        
+        if (recentPredictionsChart) recentPredictionsChart.destroy();
+        
+        // Use last 24 records for 12-hour view
+        const displayCount = Math.min(24, data.labels ? data.labels.length : 0);
+        const startIdx = data.labels ? Math.max(0, data.labels.length - displayCount) : 0;
+        
+        recentPredictionsChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: data.labels ? data.labels.slice(startIdx) : [],
+                datasets: [
+                    {
+                        label: 'Actual Temperature (°C)',
+                        data: data.temperatures ? data.temperatures.slice(startIdx) : [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Predicted Temperature (°C)',
+                        data: data.predictions ? data.predictions.slice(startIdx) : [],
+                        borderColor: '#f44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+    
+    function initializeTempTrendChart(data) {
+        const ctx = document.getElementById('tempTrendChart');
+        if (!ctx) return;
+        
+        if (tempTrendChart) tempTrendChart.destroy();
+        
+        // Use last 12 records for 1-hour view
+        const displayCount = Math.min(12, data.labels ? data.labels.length : 0);
+        const startIdx = data.labels ? Math.max(0, data.labels.length - displayCount) : 0;
+        
+        tempTrendChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: data.labels ? data.labels.slice(startIdx) : [],
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: data.temperatures ? data.temperatures.slice(startIdx) : [],
+                        borderColor: '#2196f3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+    
+    function exportData() {
+        if (allPredictions.length === 0) {
+            alert('No data to export');
+            return;
+        }
+        
+        let csv = '🕐 Time & Date,🌡️ Actual (°C),📊 Predicted (°C),📈 Error (°C),✅ Confidence (%),💧 Humidity (%)\n';
+        
+        allPredictions.forEach(pred => {
+            const datetime = pred.datetime || new Date(pred.timestamp).toLocaleString();
+            const actual = (pred.temperature || 0).toFixed(2);
+            const predicted = (pred.prediction || 0).toFixed(2);
+            const error = (pred.error || 0).toFixed(2);
+            const confidence = (pred.confidence || 0).toFixed(1);
+            const humidity = (pred.humidity || 0).toFixed(1);
+            
+            csv += `"${datetime}",${actual},${predicted},${error},${confidence},${humidity}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `predictions-history-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+</script>
+
+<style>
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+{% endblock %}
+

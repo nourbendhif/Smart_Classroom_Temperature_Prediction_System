@@ -1,0 +1,238 @@
+<!-- stats.html - User statistics page -->
+{% extends "base.html" %}
+
+{% block title %}Statistics - Temperature System{% endblock %}
+
+{% block content %}
+<h1>📊 Statistics & Monitoring</h1>
+
+<div class="alert alert-info">
+    Current occupancy and system performance metrics
+</div>
+
+<!-- Current Status Cards -->
+<div class="grid grid-3">
+    <div class="metric">
+        <div class="metric-label">Current Occupancy</div>
+        <div class="metric-value" id="occupancyValue">0</div>
+        <small>People in building</small>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">Current Temperature</div>
+        <div class="metric-value" id="tempValue">-- °C</div>
+        <small id="tempTime">--:--</small>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">Predicted Temperature</div>
+        <div class="metric-value" id="predictionValue">-- °C</div>
+        <small id="confidenceValue">-- % confidence</small>
+    </div>
+</div>
+
+<!-- More Metrics -->
+<div class="grid grid-3">
+    <div class="metric">
+        <div class="metric-label">Humidity</div>
+        <div class="metric-value" id="humidityValue">-- %</div>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">Pressure</div>
+        <div class="metric-value" id="pressureValue">-- hPa</div>
+    </div>
+    
+    <div class="metric">
+        <div class="metric-label">Movement</div>
+        <div class="metric-value" id="movementValue">0</div>
+    </div>
+</div>
+
+<!-- Occupancy Trend -->
+<div class="card">
+    <h2>👥 Occupancy Trend</h2>
+    <canvas id="occupancyChart"></canvas>
+</div>
+
+<!-- RFID Active Users -->
+<div class="card">
+    <h2>📱 Current RFID Status</h2>
+    <div id="rfidStatusContainer">
+        <p style="color: #999; text-align: center;">Loading...</p>
+    </div>
+</div>
+
+<!-- Vent Status -->
+<div class="card">
+    <h2>🌬️ Vent Control Status</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Vent Status:</div>
+            <div id="ventStatus" style="font-size: 24px; font-weight: 700; color: #667eea;">
+                ● Offline
+            </div>
+        </div>
+        <div>
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Temperature Threshold:</div>
+            <div id="tempThreshold" style="font-size: 24px; font-weight: 700; color: #667eea;">
+                25°C
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info" style="margin-top: 20px;">
+    <strong>📈 Note:</strong> Recent predictions and temperature trends have been moved to <a href="/predictions-history" style="color: #667eea; text-decoration: underline;">Predictions History</a> page for better analysis with date & time details.
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    let occupancyChart;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSensorData();
+        loadSettings();
+        loadRFIDStatus();
+        loadOccupancyChart();
+        
+        // Refresh every 10 seconds
+        setInterval(loadSensorData, 10000);
+        setInterval(loadRFIDStatus, 20000);
+        setInterval(loadOccupancyChart, 30000);
+    });
+    
+    async function loadSensorData() {
+        try {
+            const response = await fetch('/api/sensor/latest');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.data) {
+                const sensor = data.data;
+                document.getElementById('tempValue').textContent = (sensor.temperature || 0).toFixed(2) + ' °C';
+                document.getElementById('humidityValue').textContent = (sensor.humidity || 0).toFixed(1) + ' %';
+                document.getElementById('pressureValue').textContent = (sensor.pressure || 0).toFixed(0) + ' hPa';
+                document.getElementById('movementValue').textContent = sensor.movement || 0;
+                document.getElementById('occupancyValue').textContent = sensor.occupancy || 0;
+                
+                const time = new Date(sensor.timestamp).toLocaleTimeString();
+                document.getElementById('tempTime').textContent = 'Last: ' + time;
+                
+                // Update prediction
+                if (sensor.prediction !== undefined) {
+                    document.getElementById('predictionValue').textContent = sensor.prediction.toFixed(2) + ' °C';
+                    document.getElementById('confidenceValue').textContent = 
+                        (sensor.confidence || 0).toFixed(1) + '% confidence';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading sensor data:', error);
+        }
+    }
+    
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/admin/settings');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                document.getElementById('tempThreshold').textContent = data.settings.temp_threshold + '°C';
+                document.getElementById('ventStatus').textContent = 
+                    (data.settings.vent_status ? '● Online' : '● Offline');
+                document.getElementById('ventStatus').style.color = 
+                    (data.settings.vent_status ? '#4caf50' : '#f44336');
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+    
+    async function loadRFIDStatus() {
+        try {
+            const response = await fetch('/api/admin/rfid/list');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                const activeRFIDs = data.rfids.filter(r => r.entry_count > 0);
+                
+                let html = '';
+                if (activeRFIDs.length === 0) {
+                    html = '<p style="color: #999; text-align: center;">No active RFIDs</p>';
+                } else {
+                    html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">';
+                    activeRFIDs.forEach(rfid => {
+                        html += `
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                                <div style="font-weight: 600; margin-bottom: 5px;">${rfid.person_name}</div>
+                                <div style="font-size: 12px; color: #666;">RFID: ${rfid.rfid_code}</div>
+                                <div style="font-size: 12px; color: #999;">Status: ✓ In Building</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                document.getElementById('rfidStatusContainer').innerHTML = html;
+            }
+        } catch (error) {
+            console.error('Error loading RFID status:', error);
+        }
+    }
+    
+    async function loadOccupancyChart() {
+        try {
+            // Fetch occupancy data from predictions history
+            const response = await fetch('/api/predictions/history?limit=24&hours=24');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.labels && data.labels.length > 0) {
+                const labels = data.labels;
+                const occupancies = [];
+                
+                // Extract occupancy from records if available
+                if (data.records && Array.isArray(data.records)) {
+                    data.records.forEach(pred => {
+                        occupancies.push(pred.occupancy || 0);
+                    });
+                } else {
+                    // Fallback: create dummy occupancy data
+                    occupancies.fill(0);
+                }
+                
+                // Create occupancy chart
+                const occCtx = document.getElementById('occupancyChart');
+                if (!occCtx) return;
+                
+                if (occupancyChart) occupancyChart.destroy();
+                
+                occupancyChart = new Chart(occCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Occupancy (People)',
+                            data: occupancies,
+                            backgroundColor: '#667eea',
+                            borderColor: '#764ba2',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading occupancy chart:', error);
+        }
+</script>
+{% endblock %}

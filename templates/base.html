@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TempControl - Intelligent Temperature Prediction{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <svg class="svg-sprite" aria-hidden="true" focusable="false">
+        <symbol id="icon-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></symbol>
+        <symbol id="icon-system" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M7 7v10"/><path d="M17 7v10"/><path d="M5 17h14"/><path d="M9.5 12h5"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.35-5.65"/><path d="M4 5.5v5h5"/><path d="M12 8v4l3 2"/></symbol>
+        <symbol id="icon-stats" viewBox="0 0 24 24"><path d="M5 19V9"/><path d="M12 19V5"/><path d="M19 19v-7"/><path d="M3 19h18"/></symbol>
+        <symbol id="icon-admin" viewBox="0 0 24 24"><path d="M12 3 20 7v5c0 5-3.4 8-8 9-4.6-1-8-4-8-9V7l8-4Z"/><path d="M9 12l2 2 4-5"/></symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7 7 0 0 0-2-1.1L14 3h-4l-.4 2.8a7 7 0 0 0-2 1.1l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 2 1.1L10 21h4l.4-2.8a7 7 0 0 0 2-1.1l2.4 1 2-3.4-2-1.5c.1-.4.2-.8.2-1.2Z"/></symbol>
+        <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M10 5H5v14h5"/><path d="M14 8l4 4-4 4"/><path d="M8 12h10"/></symbol>
+        <symbol id="icon-sun" viewBox="0 0 24 24"><path d="M12 5V3"/><path d="M12 21v-2"/><path d="m5.6 5.6-1.4-1.4"/><path d="m19.8 19.8-1.4-1.4"/><path d="M5 12H3"/><path d="M21 12h-2"/><path d="m5.6 18.4-1.4 1.4"/><path d="m19.8 4.2-1.4 1.4"/><circle cx="12" cy="12" r="4"/></symbol>
+        <symbol id="icon-temp" viewBox="0 0 24 24"><path d="M10 14.5V5a3 3 0 0 1 6 0v9.5a5 5 0 1 1-6 0Z"/><path d="M13 8v8"/></symbol>
+        <symbol id="icon-droplet" viewBox="0 0 24 24"><path d="M12 3s6 6.2 6 11a6 6 0 0 1-12 0c0-4.8 6-11 6-11Z"/><path d="M9.5 15.5A3 3 0 0 0 13 18"/></symbol>
+        <symbol id="icon-gauge" viewBox="0 0 24 24"><path d="M4 14a8 8 0 0 1 16 0"/><path d="M12 14l4-4"/><path d="M6.5 17h11"/><path d="M8 11h.01"/><path d="M16 11h.01"/></symbol>
+        <symbol id="icon-brain" viewBox="0 0 24 24"><path d="M9 5a3 3 0 0 0-3 3v1a3 3 0 0 0 0 6v1a3 3 0 0 0 5 2.2"/><path d="M15 5a3 3 0 0 1 3 3v1a3 3 0 0 1 0 6v1a3 3 0 0 1-5 2.2"/><path d="M12 4v16"/><path d="M8 11h3"/><path d="M13 13h3"/></symbol>
+        <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></symbol>
+        <symbol id="icon-fan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M12 10c1-4 5-5 7-3 1.5 1.6.2 4.6-3.2 5.5"/><path d="M13.7 13c3.1 2.7 2.3 6.8-.4 7.5-2.2.6-4.1-2.1-3-5.4"/><path d="M10.3 13C6.2 14 3.4 11 4.1 8.4 4.8 6.2 8 6 10.4 8.5"/></symbol>
+        <symbol id="icon-users" viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M17 11a2.5 2.5 0 1 0 0-5"/><path d="M16 14.5a4.5 4.5 0 0 1 4.5 4.5"/></symbol>
+        <symbol id="icon-motion" viewBox="0 0 24 24"><path d="M13 4 8 13h5l-2 7 6-10h-5l1-6Z"/><path d="M4 8a8 8 0 0 0 0 8"/><path d="M20 8a8 8 0 0 1 0 8"/></symbol>
+    </svg>
+    <div class="app-shell">
+        {% if session.get('username') %}
+        <aside class="side-nav" aria-label="Primary navigation">
+            <a class="side-brand" href="/dashboard" title="TempControl">
+                <span class="brand-mark">T</span>
+            </a>
+            <nav class="side-links">
+                <a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %}" title="Dashboard">
+                    <span class="nav-icon"><svg><use href="#icon-home"></use></svg></span><span data-i18n="nav.home">Home</span>
+                </a>
+                <a href="/system-info" class="{% if request.path == '/system-info' %}active{% endif %}" title="System">
+                    <span class="nav-icon"><svg><use href="#icon-system"></use></svg></span><span data-i18n="nav.system">System</span>
+                </a>
+                <a href="/predictions-history" class="{% if request.path == '/predictions-history' %}active{% endif %}" title="History">
+                    <span class="nav-icon"><svg><use href="#icon-history"></use></svg></span><span data-i18n="nav.history">History</span>
+                </a>
+                <a href="/stats" class="{% if request.path == '/stats' %}active{% endif %}" title="Statistics">
+                    <span class="nav-icon"><svg><use href="#icon-stats"></use></svg></span><span data-i18n="nav.stats">Stats</span>
+                </a>
+                {% if session.get('role') == 'admin' %}
+                <a href="/admin" class="{% if request.path == '/admin' %}active{% endif %}" title="Admin">
+                    <span class="nav-icon"><svg><use href="#icon-admin"></use></svg></span><span data-i18n="nav.admin">Admin</span>
+                </a>
+                {% endif %}
+                <a href="/settings" class="{% if request.path == '/settings' %}active{% endif %}" title="Settings">
+                    <span class="nav-icon"><svg><use href="#icon-settings"></use></svg></span><span data-i18n="nav.config">Config</span>
+                </a>
+            </nav>
+            <a class="side-more" href="/logout" title="Logout" aria-label="Logout"><svg><use href="#icon-logout"></use></svg></a>
+        </aside>
+        {% endif %}
+
+        <div class="app-main">
+            <header class="top-bar">
+                <div>
+                    <a class="wordmark" href="{{ '/dashboard' if session.get('username') else '/login' }}">
+                        <span class="wordmark-logo">tc</span>
+                        <span>
+                            <strong>TempControl AI</strong>
+                            <small data-i18n="brand.subtitle">Temperature prediction system</small>
+                        </span>
+                    </a>
+                </div>
+                <div class="top-actions">
+                    <label class="language-switcher" for="languageSelect">
+                        <span data-i18n="lang.label">Language</span>
+                        <select id="languageSelect" aria-label="Language">
+                            <option value="en">EN</option>
+                            <option value="fr">FR</option>
+                            <option value="ar">AR</option>
+                        </select>
+                    </label>
+                    <button class="icon-btn" id="modeToggle" title="Toggle theme" aria-label="Toggle theme">
+                        <svg><use href="#icon-sun"></use></svg><span id="modeIcon">Day</span>
+                    </button>
+                    {% if session.get('username') %}
+                    <div class="user-chip">
+                        <span class="avatar">{{ session.get('username', 'U')[:1]|upper }}</span>
+                        <span>
+                            <strong>{{ session.get('username') }}</strong>
+                            <small>{{ session.get('role') }}</small>
+                        </span>
+                    </div>
+                    <a href="/logout" class="btn btn-secondary"><svg class="btn-icon"><use href="#icon-logout"></use></svg><span data-i18n="nav.logout">Logout</span></a>
+                    {% else %}
+                    <a href="/login" class="btn btn-secondary">Login</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <main>
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                {% if message %}
+                <div class="alert alert-success">{{ message|safe }}</div>
+                {% endif %}
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        (function() {
+            const html = document.documentElement;
+            const toggle = document.getElementById('modeToggle');
+            const icon = document.getElementById('modeIcon');
+            const langSelect = document.getElementById('languageSelect');
+            const saved = localStorage.getItem('tc-theme') || 'light';
+            const translations = {
+                en: {
+                    'brand.subtitle': 'Temperature prediction system',
+                    'nav.home': 'Home',
+                    'nav.system': 'System',
+                    'nav.history': 'History',
+                    'nav.stats': 'Stats',
+                    'nav.admin': 'Admin',
+                    'nav.config': 'Config',
+                    'nav.logout': 'Logout',
+                    'lang.label': 'Language',
+                    'theme.day': 'Day',
+                    'theme.night': 'Night',
+                    'home.title': 'Live Temperature Intelligence',
+                    'home.subtitle': 'A clear, real-time cockpit for your smart prediction system.',
+                    'home.temp': 'Temperature',
+                    'home.humidity': 'Humidity',
+                    'home.pressure': 'Pressure',
+                    'home.predicted': 'Predicted temperature',
+                    'home.confidence': 'Confidence',
+                    'home.lastPrediction': 'Last prediction',
+                    'home.aiMode': 'AI mode',
+                    'home.occupancy': 'Occupancy',
+                    'home.movement': 'Movement',
+                    'home.lastUpdate': 'Last sensor update',
+                    'home.fan': 'Fan status',
+                    'home.uptime': 'Page uptime',
+                    'home.sensorHint': 'Latest sensor value',
+                    'home.humidityHint': 'Ambient humidity',
+                    'home.pressureHint': 'Atmospheric pressure',
+                    'home.predictionHint': 'Model forecast',
+                    'home.confidenceHint': 'Model certainty',
+                    'home.predictionTimeHint': 'Most recent prediction time',
+                    'home.modeHint': 'Automatic intelligence mode',
+                    'home.occupancyHint': 'People detected by RFID',
+                    'home.movementHint': 'Motion sensor state',
+                    'home.updateHint': 'Latest data refresh',
+                    'home.fanHint': 'Ventilation output',
+                    'home.uptimeHint': 'Current dashboard session'
+                },
+                fr: {
+                    'brand.subtitle': 'Systeme de prediction de temperature',
+                    'nav.home': 'Accueil',
+                    'nav.system': 'Systeme',
+                    'nav.history': 'Historique',
+                    'nav.stats': 'Stats',
+                    'nav.admin': 'Admin',
+                    'nav.config': 'Config',
+                    'nav.logout': 'Deconnexion',
+                    'lang.label': 'Langue',
+                    'theme.day': 'Jour',
+                    'theme.night': 'Nuit',
+                    'home.title': 'Intelligence Temperature Live',
+                    'home.subtitle': 'Un cockpit clair et temps reel pour ton systeme intelligent de prediction.',
+                    'home.temp': 'Temperature',
+                    'home.humidity': 'Humidite',
+                    'home.pressure': 'Pression',
+                    'home.predicted': 'Temperature predite',
+                    'home.confidence': 'Confiance',
+                    'home.lastPrediction': 'Derniere prediction',
+                    'home.aiMode': 'Mode IA',
+                    'home.occupancy': 'Occupation',
+                    'home.movement': 'Mouvement',
+                    'home.lastUpdate': 'Derniere mesure',
+                    'home.fan': 'Etat ventilateur',
+                    'home.uptime': 'Temps page',
+                    'home.sensorHint': 'Derniere valeur capteur',
+                    'home.humidityHint': 'Humidite ambiante',
+                    'home.pressureHint': 'Pression atmospherique',
+                    'home.predictionHint': 'Prevision du modele',
+                    'home.confidenceHint': 'Certitude du modele',
+                    'home.predictionTimeHint': 'Heure de prediction recente',
+                    'home.modeHint': 'Mode intelligent automatique',
+                    'home.occupancyHint': 'Personnes detectees par RFID',
+                    'home.movementHint': 'Etat du capteur mouvement',
+                    'home.updateHint': 'Dernier rafraichissement',
+                    'home.fanHint': 'Sortie ventilation',
+                    'home.uptimeHint': 'Session actuelle'
+                },
+                ar: {
+                    'brand.subtitle': 'نظام توقع درجة الحرارة',
+                    'nav.home': 'الرئيسية',
+                    'nav.system': 'النظام',
+                    'nav.history': 'السجل',
+                    'nav.stats': 'إحصائيات',
+                    'nav.admin': 'المدير',
+                    'nav.config': 'الإعدادات',
+                    'nav.logout': 'خروج',
+                    'lang.label': 'اللغة',
+                    'theme.day': 'نهار',
+                    'theme.night': 'ليل',
+                    'home.title': 'ذكاء الحرارة المباشر',
+                    'home.subtitle': 'لوحة واضحة وفورية لنظام التوقع الذكي.',
+                    'home.temp': 'درجة الحرارة',
+                    'home.humidity': 'الرطوبة',
+                    'home.pressure': 'الضغط',
+                    'home.predicted': 'الحرارة المتوقعة',
+                    'home.confidence': 'الثقة',
+                    'home.lastPrediction': 'آخر توقع',
+                    'home.aiMode': 'وضع الذكاء',
+                    'home.occupancy': 'الحضور',
+                    'home.movement': 'الحركة',
+                    'home.lastUpdate': 'آخر تحديث',
+                    'home.fan': 'حالة المروحة',
+                    'home.uptime': 'مدة الصفحة',
+                    'home.sensorHint': 'آخر قراءة من الحساس',
+                    'home.humidityHint': 'رطوبة المحيط',
+                    'home.pressureHint': 'الضغط الجوي',
+                    'home.predictionHint': 'توقع النموذج',
+                    'home.confidenceHint': 'ثقة النموذج',
+                    'home.predictionTimeHint': 'وقت آخر توقع',
+                    'home.modeHint': 'وضع تلقائي ذكي',
+                    'home.occupancyHint': 'أشخاص تم كشفهم عبر RFID',
+                    'home.movementHint': 'حالة حساس الحركة',
+                    'home.updateHint': 'آخر تحديث للبيانات',
+                    'home.fanHint': 'خرج التهوية',
+                    'home.uptimeHint': 'جلسة اللوحة الحالية'
+                }
+            };
+
+            Object.assign(translations.en, {
+                'admin.totalUsers': 'Total Users',
+                'admin.systemUsers': 'System users',
+                'admin.totalRfids': 'Total RFIDs',
+                'admin.registeredDevices': 'Registered devices',
+                'admin.currentOccupancy': 'Current Occupancy',
+                'admin.peopleBuilding': 'People in building',
+                'admin.systemStatus': 'System Status',
+                'admin.servicesRunning': 'All services running',
+                'admin.fanStatus': 'Fan Status',
+                'admin.ledPrototype': 'LED Prototype',
+                'admin.lastActivity': 'Last Activity',
+                'admin.latestEvent': 'Latest event',
+                textMap: {
+                    'Admin Panel': 'Admin Panel',
+                    'Administrator Dashboard: Manage users, RFID devices, and system settings': 'Administrator Dashboard: Manage users, RFID devices, and system settings',
+                    'Users': 'Users',
+                    'RFID Devices': 'RFID Devices',
+                    'Fan Control': 'Fan Control',
+                    'Settings': 'Settings',
+                    'Attendance': 'Attendance',
+                    'User Management': 'User Management',
+                    'Create New User': 'Create New User',
+                    'Registered Users': 'Registered Users',
+                    'Statistics & Monitoring': 'Statistics & Monitoring',
+                    'System Information': 'System Information',
+                    'Temperature Predictions History': 'Temperature Predictions History',
+                    'Current Occupancy': 'Current Occupancy',
+                    'Current Temperature': 'Current Temperature',
+                    'Predicted Temperature': 'Predicted Temperature',
+                    'Humidity': 'Humidity',
+                    'Pressure': 'Pressure',
+                    'Movement': 'Movement',
+                    'Refresh This Page': 'Refresh This Page',
+                    'Save All Settings': 'Save All Settings',
+                    'TempControl AI': 'TempControl AI',
+                    'Create Account': 'Create Account',
+                    'Login': 'Login',
+                    'Username': 'Username',
+                    'Password': 'Password',
+                    'Email Address': 'Email Address',
+                    'Confirm': 'Confirm',
+                    'System Settings': 'System Settings',
+                    'Fan Configuration': 'Fan Configuration',
+                    'Temperature Monitoring': 'Temperature Monitoring',
+                    'Occupancy Tracking': 'Occupancy Tracking',
+                    'Automation & Control': 'Automation & Control',
+                    'Prediction Settings': 'Prediction Settings',
+                    'Data Management': 'Data Management'
+                }
+            });
+
+            Object.assign(translations.fr, {
+                'admin.totalUsers': 'Total utilisateurs',
+                'admin.systemUsers': 'Utilisateurs systeme',
+                'admin.totalRfids': 'Total RFID',
+                'admin.registeredDevices': 'Appareils enregistres',
+                'admin.currentOccupancy': 'Occupation actuelle',
+                'admin.peopleBuilding': 'Personnes dans le batiment',
+                'admin.systemStatus': 'Etat du systeme',
+                'admin.servicesRunning': 'Tous les services fonctionnent',
+                'admin.fanStatus': 'Etat ventilateur',
+                'admin.ledPrototype': 'Prototype LED',
+                'admin.lastActivity': 'Derniere activite',
+                'admin.latestEvent': 'Dernier evenement',
+                textMap: {
+                    'Admin Panel': 'Panneau admin',
+                    'Administrator Dashboard: Manage users, RFID devices, and system settings': 'Tableau administrateur: gerer utilisateurs, RFID et parametres systeme',
+                    'Users': 'Utilisateurs',
+                    'RFID Devices': 'Appareils RFID',
+                    'Fan Control': 'Controle ventilateur',
+                    'Settings': 'Parametres',
+                    'Attendance': 'Presence',
+                    'User Management': 'Gestion utilisateurs',
+                    'Create New User': 'Creer un utilisateur',
+                    'Registered Users': 'Utilisateurs inscrits',
+                    'Statistics & Monitoring': 'Statistiques et monitoring',
+                    'System Information': 'Informations systeme',
+                    'Temperature Predictions History': 'Historique des predictions',
+                    'Current Occupancy': 'Occupation actuelle',
+                    'Current Temperature': 'Temperature actuelle',
+                    'Predicted Temperature': 'Temperature predite',
+                    'Humidity': 'Humidite',
+                    'Pressure': 'Pression',
+                    'Movement': 'Mouvement',
+                    'Refresh This Page': 'Rafraichir la page',
+                    'Save All Settings': 'Enregistrer les parametres',
+                    'TempControl AI': 'TempControl AI',
+                    'Create Account': 'Creer un compte',
+                    'Login': 'Connexion',
+                    'Username': 'Nom utilisateur',
+                    'Password': 'Mot de passe',
+                    'Email Address': 'Adresse email',
+                    'Confirm': 'Confirmer',
+                    'System Settings': 'Parametres systeme',
+                    'Fan Configuration': 'Configuration ventilateur',
+                    'Temperature Monitoring': 'Suivi temperature',
+                    'Occupancy Tracking': 'Suivi occupation',
+                    'Automation & Control': 'Automatisation et controle',
+                    'Prediction Settings': 'Parametres prediction',
+                    'Data Management': 'Gestion donnees'
+                }
+            });
+
+            Object.assign(translations.ar, {
+                'brand.subtitle': '\u0646\u0638\u0627\u0645 \u062a\u0648\u0642\u0639 \u062f\u0631\u062c\u0629 \u0627\u0644\u062d\u0631\u0627\u0631\u0629',
+                'nav.home': '\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629',
+                'nav.system': '\u0627\u0644\u0646\u0638\u0627\u0645',
+                'nav.history': '\u0627\u0644\u0633\u062c\u0644',
+                'nav.stats': '\u0625\u062d\u0635\u0627\u0626\u064a\u0627\u062a',
+                'nav.admin': '\u0627\u0644\u0645\u062f\u064a\u0631',
+                'nav.config': '\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a',
+                'nav.logout': '\u062e\u0631\u0648\u062c',
+                'lang.label': '\u0627\u0644\u0644\u063a\u0629',
+                'theme.day': '\u0646\u0647\u0627\u0631',
+                'theme.night': '\u0644\u064a\u0644',
+                'home.title': '\u0630\u0643\u0627\u0621 \u0627\u0644\u062d\u0631\u0627\u0631\u0629 \u0627\u0644\u0645\u0628\u0627\u0634\u0631',
+                'home.subtitle': '\u0644\u0648\u062d\u0629 \u0648\u0627\u0636\u062d\u0629 \u0648\u0641\u0648\u0631\u064a\u0629 \u0644\u0646\u0638\u0627\u0645 \u0627\u0644\u062a\u0648\u0642\u0639 \u0627\u0644\u0630\u0643\u064a.',
+                'home.temp': '\u062f\u0631\u062c\u0629 \u0627\u0644\u062d\u0631\u0627\u0631\u0629',
+                'home.humidity': '\u0627\u0644\u0631\u0637\u0648\u0628\u0629',
+                'home.pressure': '\u0627\u0644\u0636\u063a\u0637',
+                'home.predicted': '\u0627\u0644\u062d\u0631\u0627\u0631\u0629 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0629',
+                'home.confidence': '\u0627\u0644\u062b\u0642\u0629',
+                'home.lastPrediction': '\u0622\u062e\u0631 \u062a\u0648\u0642\u0639',
+                'home.aiMode': '\u0648\u0636\u0639 \u0627\u0644\u0630\u0643\u0627\u0621',
+                'home.occupancy': '\u0627\u0644\u062d\u0636\u0648\u0631',
+                'home.movement': '\u0627\u0644\u062d\u0631\u0643\u0629',
+                'home.fan': '\u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u0631\u0648\u062d\u0629',
+                'home.sensorHint': '\u0622\u062e\u0631 \u0642\u0631\u0627\u0621\u0629 \u0645\u0646 \u0627\u0644\u062d\u0633\u0627\u0633',
+                'home.humidityHint': '\u0631\u0637\u0648\u0628\u0629 \u0627\u0644\u0645\u062d\u064a\u0637',
+                'home.pressureHint': '\u0627\u0644\u0636\u063a\u0637 \u0627\u0644\u062c\u0648\u064a',
+                'home.predictionHint': '\u062a\u0648\u0642\u0639 \u0627\u0644\u0646\u0645\u0648\u0630\u062c',
+                'home.confidenceHint': '\u062b\u0642\u0629 \u0627\u0644\u0646\u0645\u0648\u0630\u062c',
+                'home.predictionTimeHint': '\u0648\u0642\u062a \u0622\u062e\u0631 \u062a\u0648\u0642\u0639',
+                'home.modeHint': '\u0648\u0636\u0639 \u062a\u0644\u0642\u0627\u0626\u064a \u0630\u0643\u064a',
+                'home.occupancyHint': '\u0623\u0634\u062e\u0627\u0635 \u062a\u0645 \u0643\u0634\u0641\u0647\u0645 \u0639\u0628\u0631 RFID',
+                'home.movementHint': '\u062d\u0627\u0644\u0629 \u062d\u0633\u0627\u0633 \u0627\u0644\u062d\u0631\u0643\u0629',
+                'home.fanHint': '\u062e\u0631\u062c \u0627\u0644\u062a\u0647\u0648\u064a\u0629',
+                'admin.totalUsers': '\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u064a\u0646',
+                'admin.systemUsers': '\u0645\u0633\u062a\u062e\u062f\u0645\u0648 \u0627\u0644\u0646\u0638\u0627\u0645',
+                'admin.totalRfids': '\u0625\u062c\u0645\u0627\u0644\u064a RFID',
+                'admin.registeredDevices': '\u0623\u062c\u0647\u0632\u0629 \u0645\u0633\u062c\u0644\u0629',
+                'admin.currentOccupancy': '\u0627\u0644\u062d\u0636\u0648\u0631 \u0627\u0644\u062d\u0627\u0644\u064a',
+                'admin.peopleBuilding': '\u0623\u0634\u062e\u0627\u0635 \u062f\u0627\u062e\u0644 \u0627\u0644\u0645\u0628\u0646\u0649',
+                'admin.systemStatus': '\u062d\u0627\u0644\u0629 \u0627\u0644\u0646\u0638\u0627\u0645',
+                'admin.servicesRunning': '\u0643\u0644 \u0627\u0644\u062e\u062f\u0645\u0627\u062a \u062a\u0639\u0645\u0644',
+                'admin.fanStatus': '\u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u0631\u0648\u062d\u0629',
+                'admin.ledPrototype': '\u0646\u0645\u0648\u0630\u062c LED',
+                'admin.lastActivity': '\u0622\u062e\u0631 \u0646\u0634\u0627\u0637',
+                'admin.latestEvent': '\u0622\u062e\u0631 \u062d\u062f\u062b',
+                textMap: {
+                    'Admin Panel': '\u0644\u0648\u062d\u0629 \u0627\u0644\u0645\u062f\u064a\u0631',
+                    'Administrator Dashboard: Manage users, RFID devices, and system settings': '\u0644\u0648\u062d\u0629 \u0627\u0644\u0645\u062f\u064a\u0631: \u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u064a\u0646 \u0648 RFID \u0648\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a',
+                    'Users': '\u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0648\u0646',
+                    'RFID Devices': '\u0623\u062c\u0647\u0632\u0629 RFID',
+                    'Fan Control': '\u062a\u062d\u0643\u0645 \u0627\u0644\u0645\u0631\u0648\u062d\u0629',
+                    'Settings': '\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a',
+                    'Attendance': '\u0627\u0644\u062d\u0636\u0648\u0631',
+                    'User Management': '\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u064a\u0646',
+                    'Create New User': '\u0625\u0646\u0634\u0627\u0621 \u0645\u0633\u062a\u062e\u062f\u0645',
+                    'Registered Users': '\u0645\u0633\u062a\u062e\u062f\u0645\u0648\u0646 \u0645\u0633\u062c\u0644\u0648\u0646',
+                    'Statistics & Monitoring': '\u0625\u062d\u0635\u0627\u0626\u064a\u0627\u062a \u0648\u0645\u0631\u0627\u0642\u0628\u0629',
+                    'System Information': '\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0646\u0638\u0627\u0645',
+                    'Temperature Predictions History': '\u0633\u062c\u0644 \u062a\u0648\u0642\u0639\u0627\u062a \u0627\u0644\u062d\u0631\u0627\u0631\u0629',
+                    'Current Occupancy': '\u0627\u0644\u062d\u0636\u0648\u0631 \u0627\u0644\u062d\u0627\u0644\u064a',
+                    'Current Temperature': '\u062f\u0631\u062c\u0629 \u0627\u0644\u062d\u0631\u0627\u0631\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629',
+                    'Predicted Temperature': '\u0627\u0644\u062d\u0631\u0627\u0631\u0629 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0629',
+                    'Humidity': '\u0627\u0644\u0631\u0637\u0648\u0628\u0629',
+                    'Pressure': '\u0627\u0644\u0636\u063a\u0637',
+                    'Movement': '\u0627\u0644\u062d\u0631\u0643\u0629',
+                    'Refresh This Page': '\u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0635\u0641\u062d\u0629',
+                    'Save All Settings': '\u062d\u0641\u0638 \u0643\u0644 \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a',
+                    'TempControl AI': 'TempControl AI',
+                    'Create Account': '\u0625\u0646\u0634\u0627\u0621 \u062d\u0633\u0627\u0628',
+                    'Login': '\u062f\u062e\u0648\u0644',
+                    'Username': '\u0627\u0633\u0645 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645',
+                    'Password': '\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631',
+                    'Email Address': '\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a',
+                    'Confirm': '\u062a\u0623\u0643\u064a\u062f',
+                    'System Settings': '\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0646\u0638\u0627\u0645',
+                    'Fan Configuration': '\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0645\u0631\u0648\u062d\u0629',
+                    'Temperature Monitoring': '\u0645\u0631\u0627\u0642\u0628\u0629 \u0627\u0644\u062d\u0631\u0627\u0631\u0629',
+                    'Occupancy Tracking': '\u062a\u062a\u0628\u0639 \u0627\u0644\u062d\u0636\u0648\u0631',
+                    'Automation & Control': '\u0627\u0644\u0623\u062a\u0645\u062a\u0629 \u0648\u0627\u0644\u062a\u062d\u0643\u0645',
+                    'Prediction Settings': '\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0648\u0642\u0639',
+                    'Data Management': '\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a'
+                }
+            });
+
+            function applyTheme(theme) {
+                html.setAttribute('data-theme', theme);
+                localStorage.setItem('tc-theme', theme);
+                const lang = localStorage.getItem('tc-lang') || 'en';
+                if (icon) icon.textContent = translations[lang][theme === 'dark' ? 'theme.night' : 'theme.day'];
+            }
+
+            function applyLanguage(lang) {
+                const dictionary = translations[lang] || translations.en;
+                html.setAttribute('lang', lang);
+                html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+                document.querySelectorAll('[data-i18n]').forEach(function(node) {
+                    const key = node.getAttribute('data-i18n');
+                    if (dictionary[key]) node.textContent = dictionary[key];
+                });
+                translateStaticText(dictionary.textMap || {});
+                localStorage.setItem('tc-lang', lang);
+                if (langSelect) langSelect.value = lang;
+                applyTheme(html.getAttribute('data-theme') || saved);
+            }
+
+            function cleanLabel(value) {
+                return value
+                    .replace(/[^\p{L}\p{N}%<>\-:& ]/gu, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            }
+
+            function translateStaticText(map) {
+                const selectors = 'main h1, main h2, main h3, main p, main strong, main th, main label, main button, main small, main .alert';
+                document.querySelectorAll(selectors).forEach(function(node) {
+                    if (node.querySelector('input, select, textarea, table, canvas, [data-i18n]')) return;
+                    const original = node.getAttribute('data-original-text') || cleanLabel(node.textContent);
+                    if (!original) return;
+                    if (!node.hasAttribute('data-original-text')) node.setAttribute('data-original-text', original);
+                    if (map[original]) node.textContent = map[original];
+                    else if ((translations.en.textMap || {})[original]) node.textContent = translations.en.textMap[original];
+                });
+            }
+
+            applyTheme(saved);
+            applyLanguage(localStorage.getItem('tc-lang') || 'en');
+            if (toggle) {
+                toggle.addEventListener('click', function() {
+                    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+                });
+            }
+            if (langSelect) {
+                langSelect.addEventListener('change', function() {
+                    applyLanguage(this.value);
+                });
+            }
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

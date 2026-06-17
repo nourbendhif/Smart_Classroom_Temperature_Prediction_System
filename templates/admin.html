@@ -1,0 +1,1217 @@
+<!-- admin.html - Admin panel for system management -->
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - System Management{% endblock %}
+
+{% block content %}
+<h1>👨‍💻 Admin Panel</h1>
+
+<div class="alert alert-info">
+    <strong>Administrator Dashboard:</strong> Manage users, RFID devices, and system settings
+</div>
+
+<!-- System Info Cards -->
+<div class="details-grid admin-summary">
+    <article class="metric detail-card detail-primary">
+        <div class="detail-top">
+            <span class="detail-icon">USR</span>
+            <span class="detail-chip">Access</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="admin.totalUsers">Total Users</div>
+            <div class="metric-value" id="adminTotalUsers">-</div>
+        </div>
+        <small data-i18n="admin.systemUsers">System users</small>
+    </article>
+
+    <article class="metric detail-card detail-danger">
+        <div class="detail-top">
+            <span class="detail-icon">RFID</span>
+            <span class="detail-chip">Cards</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="admin.totalRfids">Total RFIDs</div>
+            <div class="metric-value" id="adminTotalRFIDs">-</div>
+        </div>
+        <small data-i18n="admin.registeredDevices">Registered devices</small>
+    </article>
+
+    <article class="metric detail-card detail-primary">
+        <div class="detail-top">
+            <span class="detail-icon">OCC</span>
+            <span class="detail-chip">Live</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="admin.currentOccupancy">Current Occupancy</div>
+            <div class="metric-value" id="adminCurrentOccupancy">0</div>
+        </div>
+        <small data-i18n="admin.peopleBuilding">People in building</small>
+    </article>
+
+    <article class="metric detail-card detail-danger">
+        <div class="detail-top">
+            <span class="detail-icon">SYS</span>
+            <span class="detail-chip">Core</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="admin.systemStatus">System Status</div>
+            <div class="metric-value admin-status-value" id="adminSystemStatus"><span>Online</span></div>
+        </div>
+        <small data-i18n="admin.servicesRunning">All services running</small>
+    </article>
+
+    <article class="metric detail-card detail-primary">
+        <div class="detail-top">
+            <span class="detail-icon">FAN</span>
+            <span class="detail-chip">Vent</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="admin.fanStatus">Fan Status</div>
+            <div class="metric-value admin-status-value" id="adminFanStatus"><span>OFF</span></div>
+        </div>
+        <small data-i18n="admin.ledPrototype">LED Prototype</small>
+    </article>
+
+    <article class="metric detail-card detail-danger">
+        <div class="detail-top">
+            <span class="detail-icon">LOG</span>
+            <span class="detail-chip">Event</span>
+        </div>
+        <div>
+            <div class="metric-label" data-i18n="admin.lastActivity">Last Activity</div>
+            <div class="metric-value admin-status-value" id="adminLastActivity"><span>--:--:--</span></div>
+        </div>
+        <small data-i18n="admin.latestEvent">Latest event</small>
+    </article>
+</div>
+
+<!-- Tab Navigation -->
+<div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+    <button class="btn" onclick="switchTab('usersTab')" id="tab-users-btn">👥 Users</button>
+    <button class="btn btn-secondary" onclick="switchTab('rfidTab')" id="tab-rfid-btn">📱 RFID Devices</button>
+    <button class="btn btn-secondary" onclick="switchTab('fanTab')" id="tab-fan-btn">🔌 Fan Control</button>
+    <button class="btn btn-secondary" onclick="switchTab('settingsTab')" id="tab-settings-btn">⚙️ Settings</button>
+    <button class="btn btn-secondary" onclick="switchTab('attendanceTab')" id="tab-attendance-btn">📊 Attendance</button>
+</div>
+
+<!-- Users Tab -->
+<div id="usersTab" class="card" style="display: block;">
+    <h2>👥 User Management</h2>
+    
+    <!-- Create User Form -->
+    <div class="card">
+        <h3 style="margin-top: 0;">Create New User</h3>
+        <div class="grid grid-2 mb-20">
+            <div class="form-group">
+                <label for="newUsername">Username:</label>
+                <input type="text" id="newUsername" placeholder="Enter username" minlength="3">
+            </div>
+            <div class="form-group">
+                <label for="newEmail">Email:</label>
+                <input type="email" id="newEmail" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label for="newPassword">Password:</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="password" id="newPassword" placeholder="Enter password" minlength="6" style="flex: 1;">
+                    <button type="button" onclick="togglePasswordVisibility('newPassword')" class="btn btn-secondary btn-small">👁️</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="newRole">Role:</label>
+                <select id="newRole">
+                    <option value="user">User (View Only)</option>
+                    <option value="admin">Admin (Full Access)</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-danger" onclick="createNewUser()">➕ Create User</button>
+    </div>
+    
+    <!-- Users List -->
+    <h3>Registered Users</h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>RFID Assigned</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <div class="spinner"></div> Loading...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- RFID Devices Tab -->
+<div id="rfidTab" class="card" style="display: none;">
+    <h2>📱 RFID Device Management</h2>
+    
+    <!-- Register RFID Form -->
+    <div class="card">
+        <h3 style="margin-top: 0;">📡 Register New RFID - Quick Scan Mode</h3>
+        <p class="text-muted" style="margin-bottom: 15px;">
+            ✨ <strong>Easy Setup:</strong> Start scanning mode, move RFID card/tag near sensor, then enter person name and save
+        </p>
+        
+        <!-- Scan Status Box -->
+        <div id="rfidScanStatus" class="alert alert-info" style="display: none; text-align: center;">
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">
+                🔴 LISTENING FOR RFID...
+            </div>
+            <div class="text-muted" style="font-size: 14px;">
+                Bring RFID card or tag close to the sensor
+            </div>
+        </div>
+        
+        <!-- RFID Input Grid -->
+        <div class="grid grid-3 mb-20">
+            <div class="form-group">
+                <label for="rfidCodeInput">📍 Detected RFID Code:</label>
+                <input type="text" id="rfidCodeInput" placeholder="Will auto-populate when RFID is scanned" autocomplete="off">
+                <small class="text-muted" style="display: block; margin-top: 5px;">🟢 = Scanned | ⚪ = Manual entry</small>
+            </div>
+            <div class="form-group">
+                <label for="personNameInput">👤 Person Name:</label>
+                <input type="text" id="personNameInput" placeholder="e.g., John Doe" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="assignUserInput">👨‍💼 Assign User:</label>
+                <select id="assignUserInput">
+                    <option value="">No Assignment</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="grid grid-3" style="gap: 10px;">
+            <button class="btn" id="scanToggleBtn" onclick="toggleRFIDScanning()">
+                🟢 Start Scanning
+            </button>
+            <button class="btn btn-danger" id="clearRFIDBtn" onclick="clearRFIDForm()">
+                🔄 Clear
+            </button>
+            <button class="btn" id="saveRFIDBtn" onclick="registerRFID()">
+                💾 Save RFID
+            </button>
+        </div>
+        
+        <!-- Status Messages -->
+        <div id="rfidStatusMessage" class="alert" style="display: none; font-weight: bold;"></div>
+    </div>
+    
+    <!-- RFID Devices List -->
+    <h3>Registered RFID Devices</h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>RFID Code</th>
+                    <th>Person Name</th>
+                    <th>Assigned User</th>
+                    <th>Status</th>
+                    <th>Last Scan</th>
+                    <th>Entry Count</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="rfidTableBody">
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div class="spinner"></div> Loading...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Fan Control Tab -->
+<div id="fanTab" class="card" style="display: none;">
+    <div class="grid grid-2 mb-20">
+        <!-- LEFT COLUMN: Fan Control System -->
+        <div>
+            <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 28px;">🔌</span> Fan Control System
+            </h2>
+            
+            <div class="card mb-20">
+                <div class="grid">
+                    <div>
+                        <div class="text-muted" style="text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Fan Status</div>
+                        <div style="font-size: 28px; font-weight: 800; margin-top: 8px;">
+                            <span id="fanStatusBadge" class="badge status-offline">🔴 OFF</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Current Mode</div>
+                        <div style="font-size: 28px; font-weight: 800; margin-top: 8px;">
+                            <span id="fanModeBadge" class="badge">⏹️ IDLE</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Last Updated</div>
+                        <div style="font-size: 14px; margin-top: 8px;" id="fanLastUpdate">Just now</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-20">
+                <h3 style="margin-top: 0; color: var(--text); display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">⏱️</span> Manual Control Mode
+                </h3>
+                <p class="text-muted" style="margin: 0 0 15px 0;">
+                    Control the fan manually. This overrides automatic mode.
+                </p>
+                
+                <!-- Quick Control Buttons -->
+                <div class="grid grid-2 mb-20">
+                    <button class="btn" onclick="setFanControl('manual_on')">▶️ Turn ON</button>
+                    <button class="btn btn-danger" onclick="setFanControl('manual_off')">⏹️ Turn OFF</button>
+                </div>
+                
+                <button class="btn btn-secondary w-full" onclick="setFanControl('stop_timer')" style="margin-bottom: 20px;">⏸️ Stop Timer</button>
+                
+                <div class="card">
+                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <input type="checkbox" id="manualRuntimeCheck" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-weight: 600; color: var(--text);">Enable auto-off timer (Optional)</span>
+                    </label>
+                    
+                    <div id="manualRuntimeSection" style="display: none; margin-top: 12px;">
+                        <label for="manualRuntimeInput" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text);">
+                            Runtime Duration (minutes):
+                        </label>
+                        <input type="number" id="manualRuntimeInput" min="1" max="480" value="30">
+                        <small class="text-muted" style="display: block; margin-top: 6px;">
+                            ℹ️ Fan will automatically turn off after this duration
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- RIGHT COLUMN: Automatic Mode Settings -->
+        <div>
+            <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 28px;">🤖</span> Automatic Mode Settings
+            </h2>
+            
+            <div class="card">
+                <p class="text-muted" style="margin: 0 0 20px 0;">
+                    Configure automatic fan control based on temperature prediction.
+                </p>
+                
+                <div class="card mb-20">
+                    <div class="grid" style="gap: 20px;">
+                        <div class="form-group">
+                            <label for="autoTempThreshold" style="font-weight: 600; margin-bottom: 8px; color: var(--text); display: block;">
+                                Activation Temperature Threshold (°C):
+                            </label>
+                            <input type="number" id="autoTempThreshold" min="15" max="40" value="25" step="0.5">
+                            <small class="text-muted" style="display: block; margin-top: 6px;">
+                                🌡️ Fan turns ON when predicted temperature ≥ this value
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="autoTempDeactivate" style="font-weight: 600; margin-bottom: 8px; color: var(--text); display: block;">
+                                Deactivation Temperature (°C):
+                            </label>
+                            <input type="number" id="autoTempDeactivate" min="10" max="35" value="20" step="0.5">
+                            <small class="text-muted" style="display: block; margin-top: 6px;">
+                                ❄️ Fan turns OFF when temperature drops below this value
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" style="margin-bottom: 15px;">
+                        <strong>⚠️ Important:</strong> Automatic mode has <strong>NO runtime limit</strong>. The fan continues to run until the temperature drops below the deactivation threshold.
+                    </div>
+                </div>
+
+                <button class="btn btn-danger" onclick="saveAutoSettings()">💾 Save Automatic Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <h4 style="margin: 0 0 12px 0; color: var(--text);">ℹ️ How It Works:</h4>
+        <ul style="margin: 0; padding-left: 20px; color: var(--text-light);">
+            <li><strong>Manual Mode:</strong> Immediately turns fan ON/OFF. Optionally auto-off after specified minutes.</li>
+            <li><strong>Automatic Mode:</strong> Monitors predicted temperature and controls fan based on thresholds. No time limit.</li>
+            <li><strong>Priority:</strong> Manual control takes priority when active.</li>
+            <li><strong>Fan Off Behavior:</strong> When fan is OFF, automatic mode is still monitoring and will activate if conditions are met.</li>
+        </ul>
+    </div>
+
+    <div id="fanStatusMessage" class="alert" style="display: none;"></div>
+</div>
+
+<!-- Settings Tab -->
+<div id="settingsTab" class="card" style="display: none;">
+    <h2>⚙️ System Settings</h2>
+    
+    <div class="grid grid-2 mb-20" style="max-width: 800px;">
+        <div class="form-group">
+            <label for="fanRuntimeInput">Fan Runtime (minutes):</label>
+            <input type="number" id="fanRuntimeInput" min="1" max="240" value="30">
+            <small class="text-muted">How long the fan should run when activated</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="tempThresholdInput">Temperature Threshold (°C):</label>
+            <input type="number" id="tempThresholdInput" min="15" max="40" value="25" step="0.5">
+            <small class="text-muted">Temperature at which fan activates</small>
+        </div>
+    </div>
+    
+    <div class="form-group" style="max-width: 800px; margin-top: 20px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="ventStatusCheck">
+            <span>Enable Automatic Vent Control</span>
+        </label>
+    </div>
+    
+    <button class="btn" onclick="updateSettings()">💾 Save Settings</button>
+</div>
+
+<!-- Attendance Tab -->
+<div id="attendanceTab" class="card" style="display: none;">
+    <h2>📊 Attendance Log</h2>
+    
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>RFID Code</th>
+                    <th>Person Name</th>
+                    <th>Date</th>
+                    <th>Entry Time</th>
+                    <th>Exit Time</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceTableBody">
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <div class="spinner"></div> Loading...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="grid grid-3" style="margin-top: 2rem;">
+    <div class="metric detail-card detail-primary">
+        <div class="detail-top">
+            <span class="detail-icon">USR</span>
+            <span class="detail-chip">Total</span>
+        </div>
+        <div class="metric-label" data-i18n="admin.totalUsers">Total Users</div>
+        <div class="metric-value" id="totalUsers">-</div>
+    </div>
+    
+    <div class="metric detail-card detail-danger">
+        <div class="detail-top">
+            <span class="detail-icon">RFID</span>
+            <span class="detail-chip">Total</span>
+        </div>
+        <div class="metric-label" data-i18n="admin.totalRfids">Total RFIDs</div>
+        <div class="metric-value" id="totalRFIDs">-</div>
+    </div>
+    
+    <div class="metric detail-card detail-primary">
+        <div class="detail-top">
+            <span class="detail-icon">OCC</span>
+            <span class="detail-chip">Live</span>
+        </div>
+        <div class="metric-label" data-i18n="admin.currentOccupancy">Current Occupancy</div>
+        <div class="metric-value" id="occupancy">0</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUsers();
+        loadRFIDs();
+        loadSettings();
+        loadAttendance();
+        
+        // Setup RFID input listeners
+        const rfidInput = document.getElementById('rfidCodeInput');
+        if (rfidInput) {
+            // Handle keypress for Enter key or any character input
+            rfidInput.addEventListener('keypress', function(e) {
+                if (!isScanning) return;
+                
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const scannedCode = rfidInput.value.trim();
+                    if (scannedCode) {
+                        processScan(scannedCode);
+                        rfidInput.value = '';
+                        scanBuffer = '';
+                    }
+                } else {
+                    // Accumulate characters in buffer
+                    scanBuffer += e.key;
+                    
+                    // Reset timeout to detect end of scan
+                    if (scanTimeout) {
+                        clearTimeout(scanTimeout);
+                    }
+                    
+                    // If buffer gets long enough (typical RFID codes are 10-16 chars)
+                    // or we get a pause between keystrokes, process the scan
+                    scanTimeout = setTimeout(() => {
+                        const code = rfidInput.value.trim();
+                        if (code && code.length > 5) {
+                            console.log('[RFID] Auto-detected code after timeout:', code);
+                            processScan(code);
+                            rfidInput.value = '';
+                            scanBuffer = '';
+                        }
+                    }, 100);
+                }
+            });
+            
+            // Also listen for input changes (handles paste events)
+            rfidInput.addEventListener('input', function(e) {
+                if (!isScanning) return;
+                
+                const value = rfidInput.value.trim();
+                // If pasted value looks like an RFID code
+                if (value && value.length > 5 && !value.includes(' ')) {
+                    processScan(value);
+                    rfidInput.value = '';
+                }
+            });
+        }
+    });
+    
+    // Tab switching
+    function switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('[id$="Tab"]').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        
+        // Remove active class from buttons
+        document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+            btn.classList.remove('btn');
+            btn.classList.add('btn-secondary');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName).style.display = 'block';
+        
+        // Highlight active button
+        const buttonId = 'tab-' + tabName.replace('Tab', '').toLowerCase() + '-btn';
+        if (document.getElementById(buttonId)) {
+            document.getElementById(buttonId).classList.remove('btn-secondary');
+            document.getElementById(buttonId).classList.add('btn');
+        }
+    }
+    
+    // Fetch and display users
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/admin/users/list');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                displayUsers(data.users);
+                updateUserSelect(data.users);
+                const userCount = data.users.length;
+                document.getElementById('totalUsers').textContent = userCount;
+                if (document.getElementById('adminTotalUsers')) {
+                    document.getElementById('adminTotalUsers').textContent = userCount;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+    
+    function displayUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '';
+        
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${user.username}</strong></td>
+                <td>${user.email || '-'}</td>
+                <td><span class="badge">${user.role || 'user'}</span></td>
+                <td><span class="badge ${user.is_active ? 'badge-success' : 'badge-danger'}">
+                    ${user.is_active ? '✓ Active' : '✗ Inactive'}
+                </span></td>
+                <td>${user.rfid_assigned || '-'}</td>
+                <td style="display: flex; gap: 5px;">
+                    <button class="btn btn-small btn-secondary" onclick="editUser('${user.username}', '${user.email}', '${user.role}')">
+                        ✏️ Edit
+                    </button>
+                    <button class="btn btn-small btn-danger" onclick="deleteUser('${user.username}')">
+                        🗑️ Delete
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+    
+    function updateUserSelect(users) {
+        const select = document.getElementById('assignUserInput');
+        select.innerHTML = '<option value="">-- No Assignment --</option>';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.username;
+            option.textContent = user.username;
+            select.appendChild(option);
+        });
+    }
+    
+    async function createNewUser() {
+        const username = document.getElementById('newUsername').value.trim();
+        const email = document.getElementById('newEmail').value.trim();
+        const password = document.getElementById('newPassword').value;
+        const role = document.getElementById('newRole').value;
+        
+        if (!username || !email || !password || !role) {
+            alert('All fields required');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/admin/users/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, role })
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert('✓ User created successfully');
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newEmail').value = '';
+                document.getElementById('newPassword').value = '';
+                loadUsers();
+            } else {
+                alert('✗ Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    async function deleteUser(username) {
+        if (!confirm(`Delete user '${username}'?`)) return;
+        
+        try {
+            const response = await fetch(`/api/admin/users/delete/${username}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert('✓ User deleted');
+                loadUsers();
+            } else {
+                alert('✗ Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    // Edit user - show edit modal
+    function editUser(username, email, role) {
+        const newEmail = prompt(`Edit email for ${username}:`, email);
+        if (newEmail === null) return;
+        
+        const newRole = prompt(`Edit role for ${username} (user/admin):`, role);
+        if (newRole === null) return;
+        
+        if (!['user', 'admin'].includes(newRole)) {
+            alert('Invalid role. Use "user" or "admin"');
+            return;
+        }
+        
+        updateUser(username, newEmail, newRole);
+    }
+    
+    // Update user
+    async function updateUser(username, email, role) {
+        try {
+            const response = await fetch(`/api/admin/users/update/${username}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, role })
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert('✓ User updated successfully');
+                loadUsers();
+            } else {
+                alert('✗ Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    // Toggle password visibility
+    function togglePasswordVisibility(fieldId) {
+        const input = document.getElementById(fieldId);
+        if (input.type === 'password') {
+            input.type = 'text';
+        } else {
+            input.type = 'password';
+        }
+    }
+    
+    // RFID Management
+    async function loadRFIDs() {
+        try {
+            const response = await fetch('/api/admin/rfid/list');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                displayRFIDs(data.rfids);
+                const rfidCount = data.rfids.length;
+                document.getElementById('totalRFIDs').textContent = rfidCount;
+                if (document.getElementById('adminTotalRFIDs')) {
+                    document.getElementById('adminTotalRFIDs').textContent = rfidCount;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading RFIDs:', error);
+        }
+    }
+    
+    function displayRFIDs(rfids) {
+        const tbody = document.getElementById('rfidTableBody');
+        tbody.innerHTML = '';
+        
+        let totalOccupancy = 0;
+        rfids.forEach(rfid => {
+            totalOccupancy += rfid.entry_count || 0;
+            const lastScan = rfid.last_scan ? new Date(rfid.last_scan).toLocaleString() : '-';
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${rfid.rfid_code}</strong></td>
+                <td>${rfid.person_name}</td>
+                <td>${rfid.assigned_user || '-'}</td>
+                <td><span class="badge ${rfid.is_active ? 'badge-success' : 'badge-danger'}">
+                    ${rfid.is_active ? '✓' : '✗'}
+                </span></td>
+                <td>${lastScan}</td>
+                <td>${rfid.entry_count || 0}</td>
+                <td>
+                    <button class="btn btn-small btn-danger" onclick="removeRFID('${rfid.rfid_code}')">
+                        🗑️ Remove
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        document.getElementById('occupancy').textContent = totalOccupancy;
+        if (document.getElementById('adminCurrentOccupancy')) {
+            document.getElementById('adminCurrentOccupancy').textContent = totalOccupancy;
+        }
+    }
+    
+    async function registerRFID() {
+        const rfidCode = document.getElementById('rfidCodeInput').value.trim();
+        const personName = document.getElementById('personNameInput').value.trim();
+        const assignedUser = document.getElementById('assignUserInput').value || null;
+        
+        if (!rfidCode || !personName) {
+            alert('❌ RFID Code and Person Name required');
+            return;
+        }
+        
+        console.log('[RFID] Registering - Code:', rfidCode, 'Person:', personName);
+        
+        try {
+            const response = await fetch('/api/admin/rfid/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rfid_code: rfidCode, person_name: personName, assigned_user: assignedUser })
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                showRFIDStatus('✅ RFID Registered Successfully!', 'success');
+                console.log('[RFID] Registration successful');
+                clearRFIDForm();
+                loadRFIDs();
+                setTimeout(() => {
+                    const statusMsg = document.getElementById('rfidStatusMessage');
+                    if (statusMsg) {
+                        statusMsg.style.display = 'none';
+                    }
+                }, 3000);
+            } else {
+                showRFIDStatus('❌ Error: ' + data.message, 'error');
+                console.error('[RFID] Registration failed:', data.message);
+            }
+        } catch (error) {
+            showRFIDStatus('❌ Error: ' + error.message, 'error');
+            console.error('[RFID] Error:', error);
+        }
+    }
+    
+    // RFID Scanning Mode
+    let isScanning = false;
+    let scannedRFID = null;
+    let scanTimeout = null;
+    let scanBuffer = '';
+    
+    function toggleRFIDScanning() {
+        isScanning = !isScanning;
+        const scanBtn = document.getElementById('scanToggleBtn');
+        const statusBox = document.getElementById('rfidScanStatus');
+        const input = document.getElementById('rfidCodeInput');
+        
+        if (isScanning) {
+            scanBtn.textContent = '🔴 Stop Scanning';
+            scanBtn.style.background = '#f44336';
+            statusBox.style.display = 'block';
+            input.focus();
+            input.value = '';
+            scanBuffer = '';
+            input.placeholder = 'Ready to scan... Bring RFID near sensor';
+            input.style.borderColor = '#4CAF50';
+            input.style.borderWidth = '2px';
+            input.style.fontSize = '16px';
+            scannedRFID = null;
+            console.log('[RFID] Scanning started - waiting for input');
+        } else {
+            scanBtn.textContent = '🟢 Start Scanning';
+            scanBtn.style.background = '#4CAF50';
+            statusBox.style.display = 'none';
+            input.style.borderColor = '';
+            input.style.borderWidth = '';
+            input.style.fontSize = '';
+            if (!scannedRFID) {
+                input.placeholder = 'Will auto-populate when RFID is scanned';
+            }
+            if (scanTimeout) {
+                clearTimeout(scanTimeout);
+                scanTimeout = null;
+            }
+            console.log('[RFID] Scanning stopped');
+        }
+    }
+    
+    function processScan(scannedCode) {
+        if (!scannedCode) return;
+        
+        console.log('[RFID] Code detected:', scannedCode);
+        scannedRFID = scannedCode;
+        showRFIDStatus('✅ RFID Detected: ' + scannedCode, 'success');
+        
+        // Auto-focus to person name field
+        const personInput = document.getElementById('personNameInput');
+        personInput.focus();
+        
+        // Stop scanning
+        isScanning = false;
+        const scanBtn = document.getElementById('scanToggleBtn');
+        scanBtn.textContent = '🟢 Start Scanning';
+        scanBtn.style.background = '#4CAF50';
+        
+        const statusBox = document.getElementById('rfidScanStatus');
+        statusBox.style.display = 'none';
+    }
+    
+    function clearRFIDForm() {
+        const rfidInput = document.getElementById('rfidCodeInput');
+        const personInput = document.getElementById('personNameInput');
+        
+        rfidInput.value = '';
+        personInput.value = '';
+        personInput.focus();
+        
+        isScanning = false;
+        scannedRFID = null;
+        scanBuffer = '';
+        
+        if (scanTimeout) {
+            clearTimeout(scanTimeout);
+            scanTimeout = null;
+        }
+        
+        const scanBtn = document.getElementById('scanToggleBtn');
+        scanBtn.textContent = '🟢 Start Scanning';
+        scanBtn.style.background = '#4CAF50';
+        
+        const statusBox = document.getElementById('rfidScanStatus');
+        statusBox.style.display = 'none';
+        
+        rfidInput.style.borderColor = '';
+        rfidInput.style.borderWidth = '';
+        rfidInput.style.fontSize = '';
+        rfidInput.placeholder = 'Will auto-populate when RFID is scanned';
+        
+        console.log('[RFID] Form cleared');
+    }
+    
+    function showRFIDStatus(message, type) {
+        const statusDiv = document.getElementById('rfidStatusMessage');
+        statusDiv.textContent = message;
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = type === 'success' ? '#4CAF50' : '#f44336';
+        statusDiv.style.color = 'white';
+    }
+    
+    async function removeRFID(rfidCode) {
+        if (!confirm(`Remove RFID '${rfidCode}'?`)) return;
+        
+        try {
+            const response = await fetch(`/api/admin/rfid/remove/${rfidCode}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert('✓ RFID removed');
+                loadRFIDs();
+            } else {
+                alert('✗ Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    // Settings Management
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/admin/settings');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                document.getElementById('fanRuntimeInput').value = data.settings.fan_runtime_minutes || 30;
+                document.getElementById('tempThresholdInput').value = data.settings.temp_threshold || 25;
+                document.getElementById('ventStatusCheck').checked = data.settings.vent_status || false;
+                
+                // Also populate fan tab settings
+                document.getElementById('autoTempThresholdInput').value = data.settings.temp_threshold || 25;
+                document.getElementById('autoFanRuntimeInput').value = data.settings.fan_runtime_minutes || 30;
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+    
+    async function updateSettings() {
+        const settings = {
+            fan_runtime_minutes: parseInt(document.getElementById('fanRuntimeInput').value),
+            temp_threshold: parseFloat(document.getElementById('tempThresholdInput').value),
+            vent_status: document.getElementById('ventStatusCheck').checked
+        };
+        
+        try {
+            const response = await fetch('/api/admin/settings/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert('✓ Settings updated');
+            } else {
+                alert('✗ Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    // Attendance Log
+    async function loadAttendance() {
+        try {
+            const response = await fetch('/api/attendance');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                displayAttendance(data.attendance);
+            }
+        } catch (error) {
+            console.error('Error loading attendance:', error);
+        }
+    }
+    
+    function displayAttendance(attendance) {
+        const tbody = document.getElementById('attendanceTableBody');
+        tbody.innerHTML = '';
+        
+        if (attendance.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No attendance records</td></tr>';
+            return;
+        }
+        
+        attendance.forEach(record => {
+            const entryTime = new Date(record.entry_time);
+            const exitTime = record.exit_time ? new Date(record.exit_time) : null;
+            const duration = exitTime ? 
+                Math.round((exitTime - entryTime) / 60000) + ' minutes' : 'In progress';
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${record.rfid_code}</td>
+                <td>${record.person_name}</td>
+                <td>${record.date}</td>
+                <td>${entryTime.toLocaleTimeString()}</td>
+                <td>${exitTime ? exitTime.toLocaleTimeString() : '-'}</td>
+                <td>${duration}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+    
+    // Auto-refresh data every 30 seconds
+    setInterval(() => {
+        loadUsers();
+        loadRFIDs();
+        loadAttendance();
+    }, 30000);
+    
+    // Create backup
+    async function createBackup() {
+        try {
+            const response = await fetch('/api/admin/backup', { method: 'POST' });
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert('✓ Backup created successfully');
+            }
+        } catch (error) {
+            alert('Error creating backup: ' + error.message);
+        }
+    }
+    
+    // Clear scan history
+    async function clearScanHistory() {
+        if (!confirm('Are you sure you want to clear all scan history? This cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/admin/scan-history/clear', { method: 'POST' });
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert('✓ Scan history cleared');
+                loadAttendance();
+            }
+        } catch (error) {
+            alert('Error clearing history: ' + error.message);
+        }
+    }
+    
+    // ==================== FAN CONTROL FUNCTIONS ====================
+    let manualRuntimeTimer = null;
+    let currentFanState = { status: 'off', mode: 'idle', lastUpdate: new Date() };
+    
+    // Handle manual runtime checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        const runtimeCheck = document.getElementById('manualRuntimeCheck');
+        const runtimeSection = document.getElementById('manualRuntimeSection');
+        
+        if (runtimeCheck) {
+            runtimeCheck.addEventListener('change', function() {
+                if (runtimeSection) {
+                    runtimeSection.style.display = this.checked ? 'block' : 'none';
+                }
+            });
+        }
+    });
+    
+    // Set fan control (Manual Mode)
+    async function setFanControl(action) {
+        try {
+            let payload = {
+                action: action,
+                mode: 'manual'
+            };
+            
+            if (action === 'manual_on') {
+                payload.status = 'on';
+                
+                // Check if runtime is enabled
+                const runtimeCheck = document.getElementById('manualRuntimeCheck');
+                if (runtimeCheck && runtimeCheck.checked) {
+                    const runtime = parseInt(document.getElementById('manualRuntimeInput').value) || 30;
+                    payload.runtime_minutes = runtime;
+                }
+            } else if (action === 'manual_off') {
+                payload.status = 'off';
+            } else if (action === 'stop_timer') {
+                payload.action = 'stop_timer';
+            }
+            
+            const response = await fetch('/api/fan/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                showFanMessage('✓ ' + (action === 'manual_on' ? 'Fan turned ON' : action === 'manual_off' ? 'Fan turned OFF' : 'Timer stopped'), 'success');
+                updateFanStatus();
+            } else {
+                showFanMessage('✗ Error: ' + data.message, 'error');
+            }
+        } catch (error) {
+            showFanMessage('✗ Error: ' + error.message, 'error');
+        }
+    }
+    
+    // Save Automatic Settings
+    async function saveAutoSettings() {
+        try {
+            const threshold = parseFloat(document.getElementById('autoTempThreshold').value) || 25;
+            const deactivate = parseFloat(document.getElementById('autoTempDeactivate').value) || 20;
+            
+            if (threshold <= deactivate) {
+                showFanMessage('✗ Error: Activation temperature must be higher than deactivation temperature', 'error');
+                return;
+            }
+            
+            const payload = {
+                mode: 'automatic',
+                activation_threshold: threshold,
+                deactivation_threshold: deactivate
+            };
+            
+            const response = await fetch('/api/fan/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                showFanMessage('✓ Automatic settings saved successfully', 'success');
+            } else {
+                showFanMessage('✗ Error: ' + data.message, 'error');
+            }
+        } catch (error) {
+            showFanMessage('✗ Error: ' + error.message, 'error');
+        }
+    }
+    
+    // Update Fan Status Display
+    async function updateFanStatus() {
+        try {
+            const response = await fetch('/api/fan/status');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.data) {
+                const fan = data.data;
+                currentFanState = fan;
+                
+                // Update status badge
+                const statusBadge = document.getElementById('fanStatusBadge');
+                const modeBadge = document.getElementById('fanModeBadge');
+                const lastUpdate = document.getElementById('fanLastUpdate');
+                
+                if (statusBadge) {
+                    statusBadge.textContent = fan.is_on ? '🟢 ON' : '🔴 OFF';
+                }
+                
+                if (modeBadge) {
+                    if (fan.mode === 'manual') {
+                        modeBadge.textContent = '⏱️ MANUAL';
+                    } else if (fan.mode === 'automatic') {
+                        modeBadge.textContent = '🤖 AUTO';
+                    } else {
+                        modeBadge.textContent = '⏹️ IDLE';
+                    }
+                }
+                
+                if (lastUpdate) {
+                    lastUpdate.textContent = new Date().toLocaleTimeString();
+                }
+                
+                // Update admin card
+                const adminFanStatus = document.getElementById('adminFanStatus');
+                if (adminFanStatus) {
+                    adminFanStatus.textContent = fan.is_on ? 'ON' : 'OFF';
+                    adminFanStatus.classList.toggle('is-on', fan.is_on);
+                }
+            }
+        } catch (error) {
+            console.error('Error updating fan status:', error);
+        }
+    }
+    
+    // Show Fan Status Message
+    function showFanMessage(message, type) {
+        const messageDiv = document.getElementById('fanStatusMessage');
+        messageDiv.textContent = message;
+        messageDiv.style.display = 'block';
+        messageDiv.style.background = type === 'success' ? '#4CAF50' : '#f44336';
+        messageDiv.style.color = 'white';
+        
+        // Auto-hide after 4 seconds
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 4000);
+    }
+    
+    // Load fan status on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateFanStatus();
+        // Update fan status every 5 seconds
+        setInterval(updateFanStatus, 5000);
+    });
+</script>
+{% endblock %}
+
+<!-- Security Section -->
+<div class="card mb-20">
+    <h2>🔒 Security & Settings</h2>
+    
+    <div style="margin: 1rem 0;">
+        <strong>Auto-Backup:</strong>
+        <button class="btn btn-small btn-secondary" onclick="createBackup()">Backup Database</button>
+    </div>
+    
+    <div style="margin: 1rem 0;">
+        <strong>Clear History:</strong>
+        <button class="btn btn-small btn-danger" onclick="clearScanHistory()">Clear Scan History</button>
+    </div>
+    
+    <div class="alert alert-info" style="margin-top: 1rem;">
+        <small>
+            <strong>Last Database Update:</strong> <span id="lastDBUpdate">--</span><br>
+            <strong>Database Size:</strong> <span id="dbSize">--</span>
+        </small>
+    </div>
+</div>
+
