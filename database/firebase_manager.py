@@ -51,11 +51,13 @@ class EnhancedFirebaseManager:
             
             if not firebase_admin._apps:
                 cred = credentials.Certificate(self.credentials_path)
-                # Extract database URL from credentials
                 with open(self.credentials_path, 'r') as f:
                     creds_dict = json.load(f)
                     project_id = creds_dict.get('project_id')
-                    self.database_url = f"https://{project_id}-default-rtdb.firebaseio.com"
+                    self.database_url = os.getenv(
+                        'FIREBASE_DATABASE_URL',
+                        f"https://{project_id}-default-rtdb.firebaseio.com"
+                    )
                 
                 firebase_admin.initialize_app(cred, {
                     'databaseURL': self.database_url

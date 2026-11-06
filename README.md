@@ -69,6 +69,8 @@ A Flask application for monitoring classroom conditions and occupancy. It connec
    - Create a Firebase project and enable the Realtime Database.
    - Create a service-account key with the required database access.
    - Save the JSON file locally and set `FIREBASE_CREDENTIALS` to its path. Relative paths are resolved from the project directory.
+   - Set `FIREBASE_DATABASE_URL` to your Realtime Database URL. If omitted, the application derives the default URL from the service-account project ID.
+   - Keep service-account JSON files private; the repository ignores common Firebase admin-key filenames.
 
 6. Provide the model files under a `models/` directory at the project root:
 

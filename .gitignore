@@ -53,6 +53,8 @@ env/
 # Firebase & API Keys
 app/API/*.json
 !app/API/.gitkeep
+firebase-credentials.json
+*-firebase-adminsdk-*.json
 
 # Model files (optional - uncomment if storing large models elsewhere)
 # app/models/*.pkl
