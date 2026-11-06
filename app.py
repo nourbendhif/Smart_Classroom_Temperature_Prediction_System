@@ -1048,7 +1048,7 @@ def api_receive_sensor_data():
         
         # Emit real-time data to all connected WebSocket clients
         try:
-            socketio.emit('sensor_update', last_sensor_data, broadcast=True)
+            socketio.emit('sensor_update', last_sensor_data)
         except Exception as e:
             print(f"[WARNING] WebSocket emit failed: {e}")
         
@@ -1193,21 +1193,16 @@ def predict():
         
         # Emit real-time data to all connected WebSocket clients
         try:
-            socketio.emit('sensor_update', last_sensor_data, broadcast=True)
+            socketio.emit('sensor_update', last_sensor_data)
         except Exception as e:
             print(f"[WARNING] WebSocket emit failed: {e}")
         
         # Determine fan state based on priority logic
         # Priority: Manual control > Automatic control
-        actual_fan_state = False
-        if fan_control['manual_mode']:
-            # Manual mode takes priority
-            actual_fan_state = fan_control['manual_state']
-        elif fan_control['auto_enabled']:
-            # Use automatic control based on temperature threshold
-            settings = firebase_db.get_settings() if firebase_db else {}
-            temp_threshold = settings.get('temp_threshold', 25.0)
-            actual_fan_state = temp > temp_threshold
+        if fan_control['mode'] == 'manual':
+            actual_fan_state = fan_control['fan_on']
+        else:
+            actual_fan_state = prediction > fan_control['temperature_threshold']
         
         # Update global fan state
         fan_control['fan_on'] = actual_fan_state
@@ -1218,7 +1213,7 @@ def predict():
             'confidence': confidence,
             'occupancy': occupancy,
             'fan_on': actual_fan_state,
-            'fan_control_mode': 'manual' if fan_control['manual_mode'] else 'automatic' if fan_control['auto_enabled'] else 'off'
+            'fan_control_mode': fan_control['mode']
         })
         
     except Exception as e:

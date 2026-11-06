@@ -1,363 +1,162 @@
-# RFID Temperature Prediction System
+# Smart Classroom Temperature Prediction
 
-A comprehensive Flask-based system that integrates RFID entry/exit tracking with real-time temperature prediction using machine learning. The system features Firebase Firestore backend, WebSocket real-time updates, and ESP32 microcontroller integration.
+A Flask application for monitoring classroom conditions and occupancy. It connects an ESP32 sensor device to a browser dashboard, uses a trained machine-learning model to generate temperature predictions, and supports RFID-based attendance and fan control.
 
-## 🎯 Features
+## Features
 
-- **RFID Entry/Exit Tracking**: Automatic occupancy management via RFID cards
-- **Temperature Prediction**: ML-based predictions using RandomForest algorithm
-- **Real-Time Updates**: WebSocket support for live sensor data streaming
-- **User Authentication**: Secure login with email verification and password reset
-- **Role-Based Access Control**: Admin and user role management
-- **Fan Control**: Manual and automatic temperature-based fan control
-- **Firebase Integration**: Cloud-based data storage and user management
-- **Dashboard**: Real-time visualization of sensor data and predictions
-- **Admin Panel**: System configuration and user management
-- **ESP32 Compatible**: Full support for ESP32 microcontroller communication
+- Live sensor updates and dashboard views for temperature, humidity, pressure, and motion.
+- Temperature predictions using the model artifacts loaded by the application.
+- ESP32 data reporting and RFID verification.
+- User registration, login, email verification, and password reset.
+- Role-based administrative pages and RFID/user management.
+- Manual and automatic fan-control settings.
+- Firebase Realtime Database integration and Socket.IO updates.
 
-## 📋 Requirements
+## Project layout
 
-- Python 3.8+
-- Flask
-- Firebase Admin SDK
-- scikit-learn (for ML model)
-- pandas
-- numpy
-- Flask-CORS
-- Flask-SocketIO
-- joblib
-
-## 🚀 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd Projet
+```text
+.
+├── app.py
+├── database/          # Authentication, Firebase, email, and scheduling
+├── esp32_client/      # Arduino sketches for the ESP32
+├── static/            # CSS and JavaScript
+├── templates/         # Flask/Jinja pages
+├── .env.example       # Environment configuration template
+└── requirements.txt
 ```
 
-### 2. Create Virtual Environment
+## Requirements
 
-```bash
-python -m venv venv
+- Python 3.8 or later
+- A Firebase service-account JSON file and a Firebase Realtime Database
+- The trained model artifacts listed below
+- For hardware integration: an ESP32 and compatible sensors/readers
 
-# On Windows
-venv\Scripts\activate
+## Setup
 
-# On macOS/Linux
-source venv/bin/activate
+1. Clone the repository and enter its directory.
+
+   ```bash
+   git clone https://github.com/nourbendhif/Temperature_Ai_Prediction.git
+   cd Temperature_Ai_Prediction
+   ```
+
+2. Create and activate a virtual environment.
+
+   **Windows (PowerShell):**
+
+   ```powershell
+   py -m venv .venv
+   .venv\Scripts\Activate.ps1
+   ```
+
+   **macOS/Linux:**
+
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. Install the Python dependencies.
+
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+4. Create a local environment file by copying `.env.example` to `.env`. Set a unique `FLASK_SECRET_KEY` and configure `FIREBASE_CREDENTIALS` to point to your Firebase service-account JSON file. Keep `.env` and the credential file private; do not commit them.
+
+5. Configure Firebase:
+   - Create a Firebase project and enable the Realtime Database.
+   - Create a service-account key with the required database access.
+   - Save the JSON file locally and set `FIREBASE_CREDENTIALS` to its path. Relative paths are resolved from the project directory.
+
+6. Provide the model files under a `models/` directory at the project root:
+
+   ```text
+   models/
+   ├── model_BEST_RandomForest_20260326_140710.pkl
+   ├── scaler_20260326_140710.pkl
+   └── features_20260326_140710.pkl
+   ```
+
+   These artifacts are not included in this repository. The application expects these exact filenames when it starts.
+
+### Optional email configuration
+
+Email verification and password-reset messages require SMTP credentials. Configure these values in `.env`:
+
+```dotenv
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SENDER_EMAIL=your-address@example.com
+SENDER_PASSWORD=your-app-password
+APP_URL=http://localhost:5000
 ```
 
-### 3. Install Dependencies
+Use an app-specific password where your provider requires one. Without sender credentials, the application logs a warning and cannot send email.
+
+## Run locally
+
+Start the application from the project root:
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure Environment Variables
-
-Create a `.env` file in the project root based on `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your configuration:
-
-```env
-FLASK_SECRET_KEY=your-secure-secret-key-here
-FIREBASE_CREDENTIALS=app/API/your-firebase-credentials.json
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-specific-password
-```
-
-### 5. Set Up Firebase
-
-1. Create a Firebase project at [firebase.google.com](https://firebase.google.com)
-2. Create a Firestore database
-3. Generate a service account JSON key
-4. Place the JSON file at `app/API/microcontrolleur-c05ca-firebase-adminsdk-fbsvc-319765e201.json`
-5. Update the `FIREBASE_CREDENTIALS` path in `.env`
-
-### 6. Prepare Models
-
-Ensure the following model files exist in `app/models/`:
-- `model_BEST_RandomForest_20260326_140710.pkl` - Trained ML model
-- `scaler_20260326_140710.pkl` - Feature scaler
-- `features_20260326_140710.pkl` - Feature list
-
-## 🏃 Running the Application
-
-### Development
-
-```bash
-cd app
 python app.py
 ```
 
-The server will start at `http://localhost:5000`
+Open [http://localhost:5000](http://localhost:5000). The built-in startup configuration runs Flask-SocketIO in debug mode and listens on all interfaces at port `5000`; use it for local development, not as-is for a public production deployment.
 
-### Production
+## ESP32 setup
 
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
+1. Install ESP32 board support in the Arduino IDE and the libraries required by the sketch.
+2. Open `esp32_client/esp32_code.ino`.
+3. Set the Wi-Fi network and password, and update `server_url` to the Flask host and port reachable from the ESP32.
+4. Select the appropriate ESP32 board and port, then upload the sketch.
+5. Wire the sensors and optional RFID reader according to the wiring notes in the sketch.
 
-## 📁 Project Structure
+The ESP32 sketch currently uses a BME280 for environmental readings, a PIR sensor for motion, and an MFRC522 RFID reader. Keep network credentials out of public commits.
 
-```
-Projet/
-├── app/
-│   ├── app.py                 # Main Flask application
-│   ├── static/                # CSS, JavaScript files
-│   ├── templates/             # HTML templates
-│   ├── models/                # ML models and scalers
-│   ├── database/              # Database managers
-│   │   ├── firebase_manager.py
-│   │   ├── auth_manager.py
-│   │   ├── email_manager.py
-│   │   ├── scheduler_manager.py
-│   │   └── db_manager.py
-│   └── esp32_client/          # ESP32 Arduino code
-├── training/                  # Model training scripts
-├── dataset_collect/           # Data collection utilities
-├── .env.example              # Environment variables template
-├── requirements.txt          # Python dependencies
-└── README.md                 # This file
-```
+## Model training results
 
-## 🔌 API Endpoints
+The reported best model is a Random Forest evaluated on the test set. The training report shows:
 
-### Authentication
-- `POST /login` - User login
-- `POST /signup` - User registration
-- `GET /logout` - User logout
-- `GET /verify-email` - Email verification
-- `POST /resend-verification` - Resend verification email
-- `POST /forgot-password` - Request password reset
-- `POST /reset-password` - Reset password
+| Metric | Result |
+| --- | ---: |
+| Test MAE | 0.1285 °C |
+| Test RMSE | 0.1649 °C |
+| Test R² | 0.9895 |
+| Forecast horizon | 10 minutes |
 
-### Main Routes
-- `GET /` - Root (redirects to dashboard)
-- `GET /dashboard` - Main dashboard
-- `GET /stats` - Statistics page
-- `GET /admin` - Admin panel
-- `GET /system-info` - System information
+The report describes the 10-minute forecast error as approximately ±0.13 °C. The most influential features include occupancy (`persons`), humidity (`hum`), recent humidity readings, and occupancy intensity.
 
-### API - Sensor Data & Predictions
-- `POST /api/sensor-data` - Receive sensor data from ESP32
-- `POST /predict` - Make predictions
-- `GET /api/sensor/latest` - Get latest sensor reading
-- `GET /api/sensor-data` - Get sensor data
-- `GET /api/predictions/latest` - Get latest predictions
-- `GET /api/predictions/history` - Get prediction history
-- `GET /api/occupancy` - Get current occupancy
+![Random Forest training results, test metrics, and feature importance](Training_Result.png)
 
-### API - Fan Control
-- `POST /api/fan/config` - Configure fan mode
-- `POST /api/fan/command` - Turn fan ON/OFF
-- `GET /api/fan/status` - Get fan status
-- `POST /api/fan/control` - Manual fan control
-- `POST /api/fan/settings` - Update fan automatic settings
+## Main pages and API
 
-### API - Admin Management
-- `GET /api/admin/users/list` - List all users
-- `POST /api/admin/users/create` - Create new user
-- `POST /api/admin/users/delete/<username>` - Delete user
-- `POST /api/admin/users/update/<username>` - Update user
-- `POST /api/admin/rfid/register` - Register RFID device
-- `GET /api/admin/rfid/list` - List RFID devices
-- `POST /api/admin/rfid/remove/<rfid_code>` - Remove RFID
-- `POST /api/admin/settings/update` - Update settings
+| Purpose | Route |
+| --- | --- |
+| Sign in / registration | `/login`, `/signup` |
+| Dashboard | `/dashboard` |
+| Statistics and prediction history | `/stats`, `/predictions-history` |
+| Administration and settings | `/admin`, `/settings` |
+| Receive ESP32 sensor data | `POST /api/sensor-data` |
+| Request a prediction | `POST /predict` |
+| Verify an RFID tag | `POST /api/rfid/verify` |
+| Read latest sensor data | `GET /api/sensor/latest` |
+| Read latest prediction/history | `GET /api/predictions/latest`, `GET /api/predictions/history` |
+| Read occupancy and attendance | `GET /api/occupancy`, `GET /api/attendance` |
+| Read or update fan controls | `/api/fan/status`, `/api/fan/config`, `/api/fan/command`, `/api/fan/control`, `/api/fan/settings` |
 
-### API - RFID
-- `POST /api/rfid/verify` - Verify RFID tag
+Administrative API routes are grouped under `/api/admin/`. For request fields and response formats, refer to the route handlers in `app.py`.
 
-## 🤖 ESP32 Integration
+## Troubleshooting
 
-### WiFi Configuration
+- **Firebase does not connect:** Check that the credential file exists, that `FIREBASE_CREDENTIALS` points to it, and that the Firebase project has Realtime Database enabled.
+- **Model loading fails:** Ensure all three model files are present in `models/` with the exact filenames above, and check compatibility with the pinned scikit-learn version.
+- **ESP32 cannot reach the server:** Confirm both devices are on a network that permits communication, and that `server_url` uses the computer's reachable LAN address and port `5000`.
+- **Email is not sent:** Verify the `SMTP_*`, `SENDER_*`, and `APP_URL` values and your email provider's SMTP/app-password requirements.
 
-Edit the SSID and password in `app/esp32_client/esp32_code.ino`:
+## Security notes
 
-```cpp
-const char* ssid = "YOUR_SSID";
-const char* password = "YOUR_PASSWORD";
-const char* serverUrl = "http://192.168.1.18:5000";
-```
-
-### Uploading to ESP32
-
-1. Install Arduino IDE
-2. Install ESP32 board support
-3. Open `app/esp32_client/esp32_code.ino`
-4. Select your board and port
-5. Upload the sketch
-
-### Sensors
-
-The ESP32 code reads from:
-- Temperature/Humidity sensor (DHT22)
-- Pressure sensor (BMP280)
-- RFID reader (MFRC522)
-- PIR motion sensor
-- Optional: Light sensor (LDR)
-
-## 🧠 Machine Learning Model
-
-The temperature prediction model uses:
-- **Algorithm**: RandomForest Classifier
-- **Features**: 
-  - Raw sensor values (temperature, humidity, pressure, movement)
-  - Temporal features (hour, minute, time of day)
-  - Lag features (previous readings)
-  - Rolling statistics (mean, std, min, max)
-  - Interaction features
-
-### Training
-
-To retrain the model:
-
-```bash
-cd training
-python train_ultimate.py
-```
-
-Model files will be generated in `app/models/`
-
-## 📊 Database Schema
-
-### Firestore Collections
-
-- **users**: User accounts and credentials
-- **rfid_devices**: RFID card registrations
-- **sensor_data**: Raw sensor readings
-- **predictions**: Temperature predictions
-- **attendance**: Entry/exit logs
-- **settings**: System configuration
-
-## 🔐 Security Features
-
-- **Email Verification**: Confirm user email during signup
-- **Password Hashing**: Secure password storage
-- **CORS Support**: Cross-origin request handling
-- **Authentication Decorators**: `@require_login`, `@require_admin`
-- **Session Management**: 24-hour session timeout
-- **Role-Based Access**: Admin-only endpoints protected
-
-## 🛠️ Development
-
-### Testing
-
-```bash
-# Test ESP32 communication
-python test_esp32_communication.py
-
-# Test fan modes
-python test_fan_modes.py
-
-# Verify fan implementation
-python verify_fan_implementation.py
-```
-
-### Debugging
-
-Enable debug mode in `app.py`:
-
-```python
-socketio.run(app, debug=True)
-```
-
-View logs in the terminal for request/response tracking.
-
-## 📝 Environment Setup for GitHub
-
-Before uploading to GitHub:
-
-1. ✅ Remove API credentials: Firebase JSON deleted
-2. ✅ Create `.env.example`: Template for environment variables
-3. Create `.gitignore`: Exclude sensitive files
-
-Example `.gitignore`:
-```
-.env
-.env.local
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-app/API/*.json
-app/models/*.pkl
-venv/
-.vscode/
-.idea/
-*.log
-node_modules/
-```
-
-## 🚨 Common Issues
-
-### Firebase Connection Error
-- Verify `FIREBASE_CREDENTIALS` path in `.env`
-- Check Firebase project ID matches configuration
-- Ensure service account has Firestore permissions
-
-### Model Loading Error
-- Verify model files exist in `app/models/`
-- Check Python version matches model training environment
-- Ensure scikit-learn version compatibility
-
-### ESP32 Not Connecting
-- Verify WiFi credentials in Arduino sketch
-- Check server IP address is correct
-- Ensure firewall allows port 5000
-
-## 📚 Documentation
-
-Additional documentation:
-- [Hardware Setup Guide](guide/README_NEW.md)
-- [Email Verification Setup](guide/SETUP_EMAIL_VERIFICATION.md)
-- [API Documentation](Backup/app/help/API_DOCUMENTATION.md)
-- [Deployment Guide](Backup/app/help/DEPLOYMENT.md)
-
-## 👥 Contributors
-
-- Project Lead: [Your Name]
-- Hardware Integration: ESP32 team
-- ML Model Development: Data science team
-
-## 📄 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
-## 📞 Support
-
-For issues or questions:
-1. Check the documentation in `guide/` and `Backup/app/help/`
-2. Review test files: `test_*.py`
-3. Enable debug logging in Flask
-
-## 🔄 Version History
-
-### v1.0.0
-- Initial release with RFID tracking
-- Temperature prediction with RandomForest
-- Firebase backend integration
-- ESP32 support
-- Web dashboard with real-time updates
+- Replace the example Flask secret with a strong, unique value before running the application.
+- Never commit Firebase service-account keys, email credentials, or `.env` files.
+- The development server is not a production deployment configuration. Use a production-ready server and review network exposure, secret handling, and access controls before deploying.
